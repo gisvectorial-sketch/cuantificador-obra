@@ -188,6 +188,111 @@ h1 {
   overflow: hidden;
 }
 
+.partida.precios-panel {
+  border-color: var(--accent);
+  border-width: 1px;
+}
+
+.precios-num {
+  background: var(--ink) !important;
+  color: var(--bg) !important;
+  width: 24px; height: 24px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+
+#precios-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.precio-grupo {
+  margin-bottom: 14px;
+}
+
+.precio-grupo-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.precio-row {
+  display: grid;
+  grid-template-columns: 1fr 110px;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.precio-row:hover {
+  background: var(--bg-soft);
+}
+
+.precio-info { min-width: 0; }
+
+.precio-nombre {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.precio-unidad {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+.precio-input {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding: 8px 10px !important;
+  min-height: 38px !important;
+  position: relative;
+}
+
+.precio-input-wrap {
+  position: relative;
+}
+
+.precio-input-wrap::before {
+  content: '$';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.precio-input-wrap input {
+  padding-left: 22px !important;
+}
+
+@media (max-width: 540px) {
+  .precio-row { grid-template-columns: 1fr 100px; gap: 8px; padding: 8px; }
+  .precio-input { font-size: 13px !important; }
+}
+
 .partida-head {
   padding: 16px 18px;
   display: flex; align-items: center; gap: 12px;
@@ -399,16 +504,26 @@ button.small {
 
 @media (max-width: 540px) {
   .mat-header, .mat-row {
-    grid-template-columns: 1.4fr 0.7fr 1fr;
+    grid-template-columns: 1.4fr 0.8fr 0.9fr;
     font-size: 12px;
+    gap: 6px;
   }
-  .mat-header > :nth-child(3), .mat-row > :nth-child(3) { display: none; }
-  .mat-header > :nth-child(4), .mat-row > :nth-child(4) { grid-column: 3; }
-  .mat-precio-input { display: none; }
-  .mat-row .mat-name-sub::after {
-    content: " · $" attr(data-precio);
-    color: var(--ink-3);
+  /* Mover el precio debajo del nombre del material */
+  .mat-header > :nth-child(3) { display: none; }
+  .mat-header > :nth-child(4) { grid-column: 3; }
+  .mat-row > :nth-child(3) {
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: 4px;
   }
+  .mat-row > :nth-child(4) { grid-column: 3; grid-row: 1; }
+  .mat-precio-input {
+    font-size: 13px !important;
+    padding: 6px 8px !important;
+    min-height: 32px !important;
+    max-width: 110px;
+  }
+  .mat-row.total > :nth-child(3) { display: none; }
 }
 
 /* ELEMENTOS DE CONCRETO (lista dinámica) */
@@ -738,6 +853,28 @@ footer strong { color: var(--ink); font-weight: 600; }
     <div class="summary-actions">
       <button class="primary small" onclick="exportarPDF()">↓ PDF</button>
       <button class="secondary small" onclick="reiniciarTodo()">Reiniciar</button>
+    </div>
+  </div>
+
+  <!-- LISTA DE PRECIOS -->
+  <div class="partida precios-panel" id="p-precios">
+    <div class="partida-head" onclick="togglePartida('p-precios')">
+      <span class="partida-num precios-num">$</span>
+      <div style="flex:1">
+        <div class="partida-title">Lista de precios</div>
+        <div class="partida-subtitle">Edita todos los costos unitarios · se guardan automáticamente</div>
+      </div>
+      <div class="partida-toggle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+      </div>
+    </div>
+    <div class="partida-body">
+      <p class="helper-text info">Los precios se guardan en tu navegador. Edita los que cambien con tus proveedores.</p>
+      <div id="precios-grid"></div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px;">
+        <button class="secondary" onclick="restablecerPrecios()">Restablecer</button>
+        <button class="secondary" onclick="exportarPrecios()">Exportar precios</button>
+      </div>
     </div>
   </div>
 
@@ -1156,7 +1293,7 @@ footer strong { color: var(--ink); font-weight: 600; }
     <div>Cuantificación referencial para anteproyecto. No sustituye un análisis de precios unitarios completo. Cantidades calculadas según rendimientos típicos de mercado en la Zona Metropolitana de Monterrey.</div>
     <div class="footer-credit">
       <span><strong>Arq. Alvaro Chapa Villarreal</strong> · Cédula Prof. 2531610</span>
-      <span>v 1.2</span>
+      <span>v 1.3</span>
     </div>
   </footer>
 
@@ -1288,7 +1425,130 @@ function actualizarPrecio(key, val) {
   const n = parseFloat(val) || 0;
   precios[key] = n;
   guardarPrecios();
+  // Sincronizar con el panel de precios si está renderizado
+  const panelInput = document.getElementById('pr-' + key);
+  if (panelInput && document.activeElement !== panelInput) panelInput.value = n;
   recalcularTodo();
+}
+
+// ========== PANEL DE LISTA DE PRECIOS ==========
+const PRECIOS_INFO = {
+  // Concreto y agregados
+  cemento_50kg:           { nombre: 'Cemento gris CPC 30R',         unidad: 'saco 50 kg',          grupo: 'Concreto y agregados' },
+  cemento_mortero_50kg:   { nombre: 'Cemento mortero',              unidad: 'saco 50 kg',          grupo: 'Concreto y agregados' },
+  arena_m3:               { nombre: 'Arena de río',                 unidad: 'm³',                  grupo: 'Concreto y agregados' },
+  grava_m3:               { nombre: 'Grava 3/4"',                   unidad: 'm³',                  grupo: 'Concreto y agregados' },
+  agua_m3:                { nombre: 'Agua',                         unidad: 'm³',                  grupo: 'Concreto y agregados' },
+  // Acero
+  varilla_2_pza:          { nombre: 'Varilla #2 (1/4")',            unidad: 'pieza 12 m',          grupo: 'Acero de refuerzo' },
+  varilla_3_pza:          { nombre: 'Varilla #3 (3/8")',            unidad: 'pieza 12 m',          grupo: 'Acero de refuerzo' },
+  varilla_4_pza:          { nombre: 'Varilla #4 (1/2")',            unidad: 'pieza 12 m',          grupo: 'Acero de refuerzo' },
+  varilla_5_pza:          { nombre: 'Varilla #5 (5/8")',            unidad: 'pieza 12 m',          grupo: 'Acero de refuerzo' },
+  varilla_6_pza:          { nombre: 'Varilla #6 (3/4")',            unidad: 'pieza 12 m',          grupo: 'Acero de refuerzo' },
+  varilla_8_pza:          { nombre: 'Varilla #8 (1")',              unidad: 'pieza 12 m',          grupo: 'Acero de refuerzo' },
+  alambre_recocido_kg:    { nombre: 'Alambre recocido cal. 18',     unidad: 'kg',                  grupo: 'Acero de refuerzo' },
+  malla_electro_66_1010_m2:{ nombre: 'Malla electrosoldada 6×6/10-10', unidad: 'm²',               grupo: 'Acero de refuerzo' },
+  // Mampostería
+  block4_pza:             { nombre: 'Block hueco 4" (10×20×40)',    unidad: 'pieza',               grupo: 'Mampostería' },
+  block6_pza:             { nombre: 'Block hueco 6" (15×20×40)',    unidad: 'pieza',               grupo: 'Mampostería' },
+  block8_pza:             { nombre: 'Block hueco 8" (20×20×40)',    unidad: 'pieza',               grupo: 'Mampostería' },
+  ladrillo_pza:           { nombre: 'Ladrillo rojo recocido',       unidad: 'pieza',               grupo: 'Mampostería' },
+  tabique_pza:            { nombre: 'Tabique común',                unidad: 'pieza',               grupo: 'Mampostería' },
+  cal_25kg:               { nombre: 'Cal hidratada',                unidad: 'saco 25 kg',          grupo: 'Mampostería' },
+  // Pisos y boquillas
+  adhesivo_20kg:          { nombre: 'Adhesivo / mortar mix',        unidad: 'saco 20 kg',          grupo: 'Pisos y acabados' },
+  boquilla_2kg:           { nombre: 'Boquilla / lechada',           unidad: 'bolsa 2 kg',          grupo: 'Pisos y acabados' },
+  // Yeso
+  yeso_40kg:              { nombre: 'Yeso',                         unidad: 'saco 40 kg',          grupo: 'Yeso y aplanados' },
+  // Pintura
+  vinilica_19l:           { nombre: 'Pintura vinílica interior',    unidad: 'cubeta 19 L',         grupo: 'Pintura' },
+  vinilica_ext_19l:       { nombre: 'Pintura vinílica exterior',    unidad: 'cubeta 19 L',         grupo: 'Pintura' },
+  esmalte_4l:             { nombre: 'Esmalte 100 (madera/metal)',   unidad: 'galón 4 L',           grupo: 'Pintura' },
+  imper_muro_19l:         { nombre: 'Impermeabilizante muros',      unidad: 'cubeta 19 L',         grupo: 'Pintura' },
+  primer_19l:             { nombre: 'Primer / sellador',            unidad: 'cubeta 19 L',         grupo: 'Pintura' },
+  // Impermeabilizante
+  imper_3a_19l:           { nombre: 'Impermeabilizante acrílico 3 años',  unidad: 'cubeta 19 L', grupo: 'Impermeabilizante' },
+  imper_5a_19l:           { nombre: 'Impermeabilizante acrílico 5 años',  unidad: 'cubeta 19 L', grupo: 'Impermeabilizante' },
+  imper_10a_19l:          { nombre: 'Impermeabilizante acrílico 10 años', unidad: 'cubeta 19 L', grupo: 'Impermeabilizante' },
+  imper_prefabricado_m2:  { nombre: 'Prefabricado asfáltico',       unidad: 'm² instalado',        grupo: 'Impermeabilizante' },
+  malla_refuerzo_m2:      { nombre: 'Malla refuerzo (impermeab.)',  unidad: 'm²',                  grupo: 'Impermeabilizante' },
+  fibra_de_vidrio_m:      { nombre: 'Fibra de vidrio (chaflanes)',  unidad: 'ml',                  grupo: 'Impermeabilizante' }
+};
+
+function renderPanelPrecios() {
+  const cont = document.getElementById('precios-grid');
+  if (!cont) return;
+  // Agrupar por grupo
+  const grupos = {};
+  for (const key in PRECIOS_INFO) {
+    const info = PRECIOS_INFO[key];
+    if (!grupos[info.grupo]) grupos[info.grupo] = [];
+    grupos[info.grupo].push({ key, ...info });
+  }
+  let html = '';
+  for (const grupo in grupos) {
+    html += `<div class="precio-grupo"><div class="precio-grupo-title">${grupo}</div>`;
+    for (const item of grupos[grupo]) {
+      const valor = precios[item.key] || 0;
+      html += `<div class="precio-row">
+        <div class="precio-info">
+          <div class="precio-nombre">${item.nombre}</div>
+          <div class="precio-unidad">${item.unidad}</div>
+        </div>
+        <div class="precio-input-wrap">
+          <input type="number" class="precio-input" id="pr-${item.key}" value="${valor}" min="0" step="1" inputmode="decimal" oninput="actualizarPrecioMaestro('${item.key}', this.value)">
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  cont.innerHTML = html;
+}
+
+function actualizarPrecioMaestro(key, val) {
+  const n = parseFloat(val) || 0;
+  precios[key] = n;
+  guardarPrecios();
+  // Sincronizar input dentro de las tablas si está visible
+  const inputsEnTablas = document.querySelectorAll(`.mat-precio-input[oninput*="${key}"]`);
+  inputsEnTablas.forEach(i => { i.value = n; });
+  recalcularTodo();
+}
+
+function restablecerPrecios() {
+  if (!confirm('¿Restablecer todos los precios a los valores iniciales?')) return;
+  precios = {...PRECIOS_DEFAULT};
+  guardarPrecios();
+  renderPanelPrecios();
+  recalcularTodo();
+}
+
+function exportarPrecios() {
+  const fecha = new Date().toLocaleDateString('es-MX');
+  let txt = `Lista de precios — ${fecha}\nArq. Alvaro Chapa Villarreal\n\n`;
+  const grupos = {};
+  for (const key in PRECIOS_INFO) {
+    const info = PRECIOS_INFO[key];
+    if (!grupos[info.grupo]) grupos[info.grupo] = [];
+    grupos[info.grupo].push({ key, ...info });
+  }
+  for (const grupo in grupos) {
+    txt += `\n${grupo.toUpperCase()}\n`;
+    for (const item of grupos[grupo]) {
+      const valor = precios[item.key] || 0;
+      txt += `  ${item.nombre.padEnd(40)}  $${valor.toLocaleString().padStart(8)}  / ${item.unidad}\n`;
+    }
+  }
+  // Copiar al portapapeles
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(() => {
+      alert('Lista de precios copiada al portapapeles');
+    }, () => {
+      alert(txt);
+    });
+  } else {
+    alert(txt);
+  }
 }
 
 function renderTabla(materiales, containerId, totalKey) {
@@ -2224,6 +2484,7 @@ proyInp.addEventListener('input', () => {
 document.getElementById('p-concreto').classList.add('open');
 
 // Render inicial
+renderPanelPrecios();
 renderElementos();
 recalcularTodo();
 </script>
