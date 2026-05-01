@@ -1293,7 +1293,7 @@ footer strong { color: var(--ink); font-weight: 600; }
     <div>Cuantificación referencial para anteproyecto. No sustituye un análisis de precios unitarios completo. Cantidades calculadas según rendimientos típicos de mercado en la Zona Metropolitana de Monterrey.</div>
     <div class="footer-credit">
       <span><strong>Arq. Alvaro Chapa Villarreal</strong> · Cédula Prof. 2531610</span>
-      <span>v 1.3</span>
+      <span>v 1.4</span>
     </div>
   </footer>
 
@@ -1402,6 +1402,12 @@ try {
 const totales = {
   concreto: 0, muros: 0, pisos: 0, zoclos: 0,
   aplanados: 0, yeso: 0, pintura: 0, imper: 0
+};
+
+// Cache de materiales calculados por partida (para PDF)
+const materialesCache = {
+  concreto: [], muros: [], pisos: [], zoclos: [],
+  aplanados: [], yeso: [], pintura: [], imper: []
 };
 
 // ========== UTILIDADES ==========
@@ -1556,6 +1562,8 @@ function renderTabla(materiales, containerId, totalKey) {
   if (!cont) return;
   // Verificar si hay alguna cantidad real
   const hayDatos = materiales.length > 0 && materiales.some(m => m.cantidad > 0);
+  // Guardar en cache solo materiales con cantidad real
+  materialesCache[totalKey] = hayDatos ? materiales.filter(m => m.cantidad > 0) : [];
   if (!hayDatos) {
     cont.innerHTML = '<div class="mat-row"><div style="grid-column:1/-1;text-align:center;color:var(--ink-3);font-size:12px;padding:14px 0;font-style:italic">Captura los datos para calcular materiales</div></div>';
     totales[totalKey] = 0;
@@ -1597,6 +1605,14 @@ const dosificaciones = {
 };
 
 let elementos = [];
+
+// Helper expuesto para agregar elementos programáticamente (útil para test/import)
+window.agregarElementoConcreto = function(obj) {
+  elementos.push(obj);
+  renderElementos();
+  recalcConcreto();
+};
+window.contarElementos = function() { return elementos.length; };
 let editandoElemIdx = -1;
 
 // Pesos teóricos de varilla en kg/m
@@ -2386,85 +2402,258 @@ function exportarPDF() {
   const doc = new jsPDF({ unit: 'mm', format: 'letter' });
   const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  // Header
-  doc.setFillColor(13, 17, 23); doc.circle(26, 18, 6, 'F');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
-  doc.text('AC', 26, 19.5, { align: 'center' });
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(13, 17, 23);
-  doc.text('Arq. Alvaro Chapa Villarreal', 36, 16);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(125, 133, 142);
-  doc.text('WhatsApp 81 2289 4100  ·  Cédula Prof. 2531610', 36, 21);
+  // Constantes de layout
+  const PAGE_W = 216;
+  const PAGE_H = 279;
+  const MARGIN_L = 18;
+  const MARGIN_R = 18;
+  const CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R;  // 180 mm
+  const FOOTER_Y = PAGE_H - 18;
 
-  doc.setFillColor(239, 244, 255);
-  doc.roundedRect(140, 13, 64, 10, 5, 5, 'F');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(29, 78, 216);
-  doc.text('CUANTIFICADOR DE OBRA', 172, 19, { align: 'center' });
+  // Posiciones X de columnas de materiales
+  const COL_NOMBRE_X = MARGIN_L;
+  const COL_UNIDAD_X = MARGIN_L + 78;
+  const COL_CANT_X = MARGIN_L + 110;
+  const COL_PUNIT_X = MARGIN_L + 138;
+  const COL_IMPORTE_X = MARGIN_L + 178;
 
-  doc.setDrawColor(232, 234, 237); doc.setLineWidth(0.3);
-  doc.line(20, 30, 196, 30);
+  let pagina = 1;
 
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(13, 17, 23);
-  doc.text('Cantidades y costos estimados', 20, 44);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(125, 133, 142);
-  if (proyectoNombre) {
-    doc.text('Proyecto: ' + proyectoNombre, 20, 50);
-    doc.text(fecha, 20, 55);
-  } else {
-    doc.text(fecha, 20, 50);
+  // ===== HEADER (todas las páginas) =====
+  function dibujarHeader() {
+    // Avatar
+    doc.setFillColor(13, 17, 23);
+    doc.circle(MARGIN_L + 6, 16, 5, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(255, 255, 255);
+    doc.text('AC', MARGIN_L + 6, 17.2, { align: 'center' });
+    // Nombre
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(13, 17, 23);
+    doc.text('Arq. Alvaro Chapa Villarreal', MARGIN_L + 14, 14);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(125, 133, 142);
+    doc.text('WhatsApp 81 2289 4100  ·  Cédula Prof. 2531610', MARGIN_L + 14, 18.5);
+    // Badge
+    doc.setFillColor(239, 244, 255);
+    doc.roundedRect(PAGE_W - MARGIN_R - 60, 11, 60, 9, 4.5, 4.5, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(29, 78, 216);
+    doc.text('CUANTIFICADOR DE OBRA', PAGE_W - MARGIN_R - 30, 16.5, { align: 'center' });
+    // Línea
+    doc.setDrawColor(232, 234, 237); doc.setLineWidth(0.3);
+    doc.line(MARGIN_L, 25, PAGE_W - MARGIN_R, 25);
   }
-  doc.line(20, 60, 196, 60);
 
-  let y = 70;
+  // ===== FOOTER (todas las páginas) =====
+  function dibujarFooter() {
+    doc.setDrawColor(232, 234, 237); doc.setLineWidth(0.3);
+    doc.line(MARGIN_L, FOOTER_Y - 6, PAGE_W - MARGIN_R, FOOTER_Y - 6);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(125, 133, 142);
+    doc.text('Cuantificación referencial. No incluye mano de obra ni equipo. Verificar precios con proveedor.', MARGIN_L, FOOTER_Y - 1);
+    doc.text('Página ' + pagina, PAGE_W - MARGIN_R, FOOTER_Y - 1, { align: 'right' });
+  }
+
+  // ===== NUEVA PÁGINA =====
+  function nuevaPagina() {
+    dibujarFooter();
+    doc.addPage();
+    pagina++;
+    dibujarHeader();
+    return 32;  // y inicial
+  }
+
+  // ===== VERIFICAR ESPACIO =====
+  function asegurarEspacio(yActual, alturaNecesaria) {
+    if (yActual + alturaNecesaria > FOOTER_Y - 10) {
+      return nuevaPagina();
+    }
+    return yActual;
+  }
+
+  // ===== TÍTULO DE PARTIDA =====
+  function dibujarTituloPartida(y, num, titulo, subtitulo) {
+    y = asegurarEspacio(y, 14);
+    // Pill número
+    doc.setFillColor(239, 244, 255);
+    doc.roundedRect(MARGIN_L, y - 3.5, 8, 5, 1, 1, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(29, 78, 216);
+    doc.text(num, MARGIN_L + 4, y, { align: 'center' });
+    // Título
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(13, 17, 23);
+    doc.text(titulo, MARGIN_L + 11, y);
+    // Subtítulo
+    if (subtitulo) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(125, 133, 142);
+      doc.text(subtitulo, MARGIN_L + 11, y + 4);
+      y += 4;
+    }
+    return y + 6;
+  }
+
+  // ===== ENCABEZADO DE TABLA =====
+  function dibujarEncabezadoTabla(y) {
+    y = asegurarEspacio(y, 8);
+    doc.setFillColor(247, 248, 250);
+    doc.rect(MARGIN_L, y - 3.5, CONTENT_W, 6, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(125, 133, 142);
+    doc.text('MATERIAL', COL_NOMBRE_X + 1, y);
+    doc.text('UNIDAD', COL_UNIDAD_X, y);
+    doc.text('CANT.', COL_CANT_X + 16, y, { align: 'right' });
+    doc.text('$ UNIT.', COL_PUNIT_X + 16, y, { align: 'right' });
+    doc.text('IMPORTE', COL_IMPORTE_X, y, { align: 'right' });
+    return y + 5;
+  }
+
+  // ===== FILA DE MATERIAL =====
+  function dibujarFilaMaterial(y, mat) {
+    y = asegurarEspacio(y, 6);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(13, 17, 23);
+    // Nombre (truncar si muy largo)
+    const nombreMax = 36;
+    const nombre = mat.nombre.length > nombreMax ? mat.nombre.slice(0, nombreMax - 1) + '…' : mat.nombre;
+    doc.text(nombre, COL_NOMBRE_X, y);
+    // Unidad
+    doc.setFontSize(7.5); doc.setTextColor(125, 133, 142);
+    const unidadMax = 16;
+    const unidad = mat.unidad.length > unidadMax ? mat.unidad.slice(0, unidadMax - 1) + '…' : mat.unidad;
+    doc.text(unidad, COL_UNIDAD_X, y);
+    // Cantidad
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(13, 17, 23);
+    doc.text(fmt(mat.cantidad), COL_CANT_X + 16, y, { align: 'right' });
+    // $ unitario
+    doc.setFont('helvetica', 'normal');
+    doc.text('$' + (mat.precio || 0).toLocaleString(), COL_PUNIT_X + 16, y, { align: 'right' });
+    // Importe
+    const importe = (mat.cantidad || 0) * (mat.precio || 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text('$' + Math.round(importe).toLocaleString(), COL_IMPORTE_X, y, { align: 'right' });
+    return y + 5;
+  }
+
+  // ===== SUBTOTAL DE PARTIDA =====
+  function dibujarSubtotal(y, total) {
+    y = asegurarEspacio(y, 10);
+    doc.setFillColor(239, 244, 255);
+    doc.rect(MARGIN_L, y - 3.5, CONTENT_W, 7, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(29, 78, 216);
+    doc.text('Subtotal partida', MARGIN_L + 2, y);
+    doc.setFontSize(10);
+    doc.text('$' + Math.round(total).toLocaleString(), COL_IMPORTE_X, y, { align: 'right' });
+    return y + 9;
+  }
+
+  // ===== ELEMENTO DE CONCRETO =====
+  function dibujarElementoConcreto(y, e) {
+    y = asegurarEspacio(y, 12);
+    const def = tiposElemento[e.tipo];
+    const dims = def.campos.map(c => (e[c] || 0).toFixed(2)).join(' × ');
+    const vol = calcVolumenElemento(e);
+    const armadoTxt = describirArmado(e);
+    // Marcador
+    doc.setFillColor(13, 17, 23);
+    doc.circle(MARGIN_L + 1.5, y - 1.2, 0.8, 'F');
+    // Tipo
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(13, 17, 23);
+    doc.text(def.label + (e.cantidad > 1 ? ' × ' + e.cantidad : ''), MARGIN_L + 5, y);
+    // Volumen a la derecha
+    doc.setFont('helvetica', 'bold');
+    doc.text(vol.toFixed(2) + ' m³', COL_IMPORTE_X, y, { align: 'right' });
+    // Dimensiones
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(125, 133, 142);
+    doc.text(dims + ' m', MARGIN_L + 5, y + 4);
+    // Armado
+    if (armadoTxt) {
+      doc.setTextColor(29, 78, 216);
+      doc.text(armadoTxt, MARGIN_L + 5, y + 8);
+      return y + 12;
+    }
+    return y + 8;
+  }
+
+  // ===== INICIO DEL DOCUMENTO =====
+  dibujarHeader();
+
+  // Título principal
+  let y = 38;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(13, 17, 23);
+  doc.text('Cuantificación de obra', MARGIN_L, y);
+  y += 6;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(125, 133, 142);
+  if (proyectoNombre) {
+    doc.text('Proyecto: ' + proyectoNombre, MARGIN_L, y);
+    y += 4;
+  }
+  doc.text(fecha, MARGIN_L, y);
+  y += 6;
+  doc.setDrawColor(13, 17, 23); doc.setLineWidth(0.4);
+  doc.line(MARGIN_L, y, PAGE_W - MARGIN_R, y);
+  y += 8;
+
+  // ===== DESGLOSE DE PARTIDAS =====
   const partidaIds = [
-    { key: 'concreto', titulo: 'Concreto', subtitulo: 'f\'c ' + document.getElementById('conc-resistencia').value + ' kg/cm²' },
-    { key: 'muros', titulo: 'Muros y mampostería', subtitulo: muroPiezas[document.getElementById('mur-tipo').value].label },
-    { key: 'pisos', titulo: 'Pisos', subtitulo: 'Formato ' + document.getElementById('pis-formato').value },
-    { key: 'zoclos', titulo: 'Zoclos', subtitulo: 'Tipo ' + document.getElementById('zoc-tipo').value },
-    { key: 'aplanados', titulo: 'Aplanados', subtitulo: 'Proporción ' + document.getElementById('apl-prop').value },
-    { key: 'yeso', titulo: 'Yeso', subtitulo: '' },
-    { key: 'pintura', titulo: 'Pintura', subtitulo: pinturaTipos[document.getElementById('pin-tipo').value].label },
-    { key: 'imper', titulo: 'Impermeabilizante', subtitulo: imperTipos[document.getElementById('imp-tipo').value].label }
+    { key: 'concreto', titulo: 'Concreto + acero', subtitulo: 'f\'c ' + document.getElementById('conc-resistencia').value + ' kg/cm² · merma ' + document.getElementById('conc-merma').value + '%', num: '01' },
+    { key: 'muros', titulo: 'Muros y mampostería', subtitulo: muroPiezas[document.getElementById('mur-tipo').value].label + ' · ' + (parseFloat(document.getElementById('mur-area').value) || 0) + ' m²', num: '02' },
+    { key: 'pisos', titulo: 'Pisos cerámicos / porcelánicos', subtitulo: 'Formato ' + document.getElementById('pis-formato').value + ' · ' + (parseFloat(document.getElementById('pis-area').value) || 0) + ' m² · merma ' + document.getElementById('pis-merma').value + '%', num: '03' },
+    { key: 'zoclos', titulo: 'Zoclos', subtitulo: (parseFloat(document.getElementById('zoc-perimetro').value) || 0) + ' ml perímetro · ' + (parseInt(document.getElementById('zoc-num-puertas').value) || 0) + ' puertas', num: '04' },
+    { key: 'aplanados', titulo: 'Aplanados', subtitulo: 'Proporción ' + document.getElementById('apl-prop').value + ' · ' + (parseFloat(document.getElementById('apl-area').value) || 0) + ' m² · ' + document.getElementById('apl-espesor').value + ' cm', num: '05' },
+    { key: 'yeso', titulo: 'Yeso', subtitulo: (parseFloat(document.getElementById('yes-area').value) || 0) + ' m² · ' + document.getElementById('yes-espesor').value + ' cm de espesor', num: '06' },
+    { key: 'pintura', titulo: 'Pintura', subtitulo: pinturaTipos[document.getElementById('pin-tipo').value].label + ' · ' + (parseFloat(document.getElementById('pin-area').value) || 0) + ' m² · ' + document.getElementById('pin-manos').value + ' manos', num: '07' },
+    { key: 'imper', titulo: 'Impermeabilizante', subtitulo: imperTipos[document.getElementById('imp-tipo').value].label + ' · ' + (parseFloat(document.getElementById('imp-area').value) || 0) + ' m²', num: '08' }
   ];
 
   let grand = 0;
+  let partidasConDatos = 0;
+
   for (const p of partidaIds) {
-    if (y > 240) { doc.addPage(); y = 20; }
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(29, 78, 216);
-    doc.text(p.titulo.toUpperCase(), 20, y);
-    if (p.subtitulo) {
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(125, 133, 142);
-      doc.text(p.subtitulo, 20, y + 4);
+    const mats = materialesCache[p.key] || [];
+    if (mats.length === 0) continue;  // Saltar partidas sin datos
+    partidasConDatos++;
+
+    y = dibujarTituloPartida(y, p.num, p.titulo, p.subtitulo);
+
+    // Si es concreto, listar elementos primero
+    if (p.key === 'concreto' && elementos.length > 0) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(125, 133, 142);
+      y = asegurarEspacio(y, 6);
+      doc.text('ELEMENTOS', MARGIN_L, y);
+      y += 4;
+      for (const e of elementos) {
+        y = dibujarElementoConcreto(y, e);
+      }
+      y += 2;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(125, 133, 142);
+      y = asegurarEspacio(y, 6);
+      doc.text('MATERIALES', MARGIN_L, y);
       y += 4;
     }
-    y += 6;
-    doc.setTextColor(13, 17, 23); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-    doc.text('Subtotal partida', 20, y);
-    doc.setFont('helvetica', 'bold');
-    doc.text(money(totales[p.key]), 196, y, { align: 'right' });
-    grand += totales[p.key];
-    y += 8;
-    doc.setDrawColor(232, 234, 237); doc.setLineWidth(0.2);
-    doc.line(20, y - 3, 196, y - 3);
+
+    y = dibujarEncabezadoTabla(y);
+    let subtotal = 0;
+    for (const mat of mats) {
+      y = dibujarFilaMaterial(y, mat);
+      subtotal += (mat.cantidad || 0) * (mat.precio || 0);
+    }
+    y = dibujarSubtotal(y, subtotal);
+    grand += subtotal;
+    y += 4;
   }
 
-  // Total
-  if (y > 230) { doc.addPage(); y = 20; }
-  y += 6;
-  doc.setFillColor(13, 17, 23);
-  doc.rect(20, y, 176, 14, 'F');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
-  doc.text('TOTAL GENERAL ESTIMADO', 25, y + 9);
-  doc.setFontSize(13);
-  doc.text(money(grand), 191, y + 9, { align: 'right' });
+  // ===== SI NO HAY DATOS =====
+  if (partidasConDatos === 0) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(125, 133, 142);
+    doc.text('No hay partidas con datos capturados.', MARGIN_L, y + 10);
+    doc.setFontSize(9);
+    doc.text('Captura cantidades en cada partida para generar el desglose.', MARGIN_L, y + 16);
+  } else {
+    // ===== TOTAL GENERAL =====
+    y = asegurarEspacio(y, 22);
+    y += 4;
+    doc.setFillColor(13, 17, 23);
+    doc.rect(MARGIN_L, y, CONTENT_W, 14, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(255, 255, 255);
+    doc.text('TOTAL GENERAL ESTIMADO', MARGIN_L + 4, y + 9);
+    doc.setFontSize(13);
+    doc.text('$' + Math.round(grand).toLocaleString(), PAGE_W - MARGIN_R - 4, y + 9, { align: 'right' });
+  }
 
-  // Footer
-  doc.setDrawColor(232, 234, 237); doc.setLineWidth(0.3);
-  doc.line(20, 254, 196, 254);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(13, 17, 23);
-  doc.text('Arq. Alvaro Chapa Villarreal', 20, 260);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(125, 133, 142);
-  doc.text('WhatsApp 81 2289 4100  ·  Cédula Prof. 2531610', 20, 264);
-  doc.text('Cuantificación referencial. No incluye mano de obra ni equipo. Verificar precios con proveedor.', 20, 268);
+  dibujarFooter();
 
   const filename = 'cuantificacion-' + (proyectoNombre || 'obra').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + new Date().toISOString().slice(0,10) + '.pdf';
   doc.save(filename);
