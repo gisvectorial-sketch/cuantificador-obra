@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Cuantificador de obra. Concreto, muros, pisos, zoclos, pintura, aplanados, yeso, impermeabilizante. Cantidades y costos editables.">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Cuantificador de obra · Arq. Alvaro Chapa Villarreal</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f7f8fa;
+  --bg-card: #ffffff;
+  --ink: #0d1117;
+  --ink-2: #4a5057;
+  --ink-3: #8b9097;
+  --ink-4: #c4c8cd;
+  --line: #e8eaed;
+  --line-2: #d6d9dd;
+  --accent: #2563eb;
+  --accent-soft: #eff4ff;
+  --accent-ink: #1d4ed8;
+  --warn-bg: #fff7ec;
+  --warn-line: #f5b95c;
+  --warn-ink: #8a5a18;
+  --good-bg: #e8f5ec;
+  --good-ink: #1d6f35;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+::selection { background: var(--accent); color: #fff; }
+
+.shell {
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 0 18px 32px;
+}
+
+@media (min-width: 700px) {
+  .shell { max-width: 720px; padding: 0 32px 48px; }
+}
+
+/* PRO HEADER */
+.pro-header {
+  padding: 20px 0 18px;
+  padding-top: calc(20px + env(safe-area-inset-top));
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pro-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.pro-identity { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
+
+.pro-avatar {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--ink); color: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 16px; letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.pro-info { min-width: 0; }
+
+.pro-name {
+  font-size: 18px; font-weight: 600; color: var(--ink);
+  letter-spacing: -0.015em; line-height: 1.2;
+  margin-bottom: 5px; white-space: nowrap;
+}
+
+.pro-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--ink-3);
+  font-family: 'JetBrains Mono', monospace; letter-spacing: 0.01em;
+}
+
+.pro-meta-item { display: inline-flex; align-items: center; gap: 6px; }
+.pro-meta-sep { opacity: 0.5; }
+
+.pro-badge {
+  font-size: 14px; font-weight: 500;
+  color: var(--accent-ink); background: var(--accent-soft);
+  padding: 10px 18px; border-radius: 999px;
+  white-space: nowrap; letter-spacing: 0.01em; flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .pro-header-inner { gap: 10px; }
+  .pro-name { white-space: normal; }
+  .pro-meta { font-size: 12px; }
+  .pro-badge { width: 100%; text-align: center; margin-top: 4px; font-size: 13px; }
+}
+
+/* HERO */
+.hero {
+  padding: 4px 0 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+}
+
+h1 {
+  font-size: 28px; font-weight: 700; line-height: 1.1;
+  letter-spacing: -0.025em; margin-bottom: 8px;
+}
+
+@media (min-width: 700px) { h1 { font-size: 36px; } }
+
+.hero-sub {
+  font-size: 14px; color: var(--ink-2); line-height: 1.5;
+}
+
+.hero-date {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--ink-3); margin-top: 12px; letter-spacing: 0.02em;
+}
+
+/* RESUMEN GLOBAL FIJO */
+.summary-bar {
+  position: sticky; top: 0;
+  background: var(--bg);
+  z-index: 5;
+  padding: 14px 0;
+  margin: 0 0 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex; gap: 12px;
+  align-items: center; justify-content: space-between;
+}
+
+.summary-total {
+  display: flex; flex-direction: column; gap: 2px;
+}
+
+.summary-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase;
+}
+
+.summary-amount {
+  font-size: 22px; font-weight: 700; color: var(--ink);
+  letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 700px) { .summary-amount { font-size: 26px; } }
+
+.summary-actions { display: flex; gap: 8px; }
+
+/* PARTIDAS (acordeón) */
+.partida {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.partida-head {
+  padding: 16px 18px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; user-select: none;
+  transition: background 0.15s ease;
+  min-height: 60px;
+}
+
+.partida-head:hover { background: var(--bg-soft); }
+.partida-head:active { background: var(--bg-soft); }
+
+.partida-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--accent); font-weight: 500;
+  background: var(--accent-soft);
+  padding: 3px 8px; border-radius: 999px;
+  letter-spacing: 0.02em; flex-shrink: 0;
+}
+
+.partida-title {
+  font-size: 15px; font-weight: 600; color: var(--ink);
+  letter-spacing: -0.01em; flex: 1;
+}
+
+.partida-subtitle {
+  font-size: 12px; color: var(--ink-3); font-weight: 400;
+  margin-top: 2px;
+}
+
+.partida-amount {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px; font-weight: 600;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.partida-amount.zero { color: var(--ink-4); font-weight: 500; }
+
+.partida-toggle {
+  width: 24px; height: 24px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-3); transition: transform 0.2s ease;
+}
+
+.partida.open .partida-toggle { transform: rotate(180deg); color: var(--accent); }
+
+.partida-body {
+  display: none;
+  padding: 4px 18px 20px;
+  border-top: 1px solid var(--line);
+}
+
+.partida.open .partida-body { display: block; }
+
+@media (min-width: 700px) {
+  .partida-body { padding: 4px 22px 24px; }
+}
+
+/* INPUTS */
+.input-row {
+  display: grid; grid-template-columns: 1fr; gap: 12px;
+  margin-bottom: 14px;
+}
+
+.input-row.cols-2 { grid-template-columns: 1fr 1fr; }
+.input-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.field { display: flex; flex-direction: column; }
+
+label {
+  font-size: 12px; font-weight: 500; color: var(--ink-2);
+  margin-bottom: 6px;
+}
+
+input, select {
+  font-family: inherit; font-size: 16px; font-weight: 500;
+  background: var(--bg-card); color: var(--ink);
+  border: 1px solid var(--line-2); border-radius: 10px;
+  padding: 12px 14px; width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-variant-numeric: tabular-nums; min-height: 48px;
+  -webkit-appearance: none; appearance: none;
+}
+
+input:focus, select:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+input::placeholder { color: var(--ink-4); font-weight: 400; }
+
+select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%238b9097' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  background-size: 12px; padding-right: 38px; cursor: pointer;
+}
+
+/* BUTTONS */
+button {
+  font-family: inherit; font-size: 14px; font-weight: 500;
+  background: var(--ink); color: #fff;
+  border: 1px solid var(--ink); border-radius: 10px;
+  padding: 12px 16px; cursor: pointer;
+  transition: all 0.15s ease; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; min-height: 48px; user-select: none;
+}
+
+button:hover { opacity: 0.92; }
+button:active { transform: scale(0.98); }
+
+button.secondary {
+  background: var(--bg-card); color: var(--ink);
+  border-color: var(--line-2);
+}
+button.secondary:hover { background: var(--bg-soft); border-color: var(--ink-3); }
+
+button.primary { background: var(--accent); border-color: var(--accent); }
+button.primary:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+
+button.small {
+  font-size: 12px; padding: 8px 12px; min-height: 36px;
+}
+
+/* TABLA DE RESULTADOS */
+.materiales-table {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.mat-header, .mat-row {
+  display: grid;
+  grid-template-columns: 1.6fr 0.7fr 1fr 1fr;
+  gap: 8px;
+  padding: 10px 12px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.mat-header {
+  background: var(--bg-soft);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  border-bottom: 1px solid var(--line);
+}
+
+.mat-row {
+  border-bottom: 1px solid var(--line);
+}
+
+.mat-row:last-child { border-bottom: 0; }
+
+.mat-name {
+  font-weight: 500; color: var(--ink);
+  font-size: 13px; line-height: 1.3;
+}
+
+.mat-name-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--ink-3); margin-top: 2px;
+}
+
+.mat-cantidad {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600; color: var(--ink);
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
+.mat-precio-input {
+  font-size: 14px !important; padding: 8px 10px !important;
+  min-height: 36px !important;
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.mat-importe {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.mat-row.total {
+  background: var(--accent-soft);
+  font-weight: 700;
+}
+
+.mat-row.total .mat-name {
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.mat-row.total .mat-importe {
+  color: var(--accent-ink);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+@media (max-width: 540px) {
+  .mat-header, .mat-row {
+    grid-template-columns: 1.4fr 0.7fr 1fr;
+    font-size: 12px;
+  }
+  .mat-header > :nth-child(3), .mat-row > :nth-child(3) { display: none; }
+  .mat-header > :nth-child(4), .mat-row > :nth-child(4) { grid-column: 3; }
+  .mat-precio-input { display: none; }
+  .mat-row .mat-name-sub::after {
+    content: " · $" attr(data-precio);
+    color: var(--ink-3);
+  }
+}
+
+/* ELEMENTOS DE CONCRETO (lista dinámica) */
+.elementos-list {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-bottom: 14px;
+}
+
+.elemento-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg-soft);
+  border-radius: var(--radius-sm);
+  align-items: center;
+  font-size: 13px;
+}
+
+.elemento-info {
+  display: flex; flex-direction: column; gap: 2px;
+  min-width: 0;
+}
+
+.elemento-tipo { font-weight: 600; color: var(--ink); font-size: 13px; }
+.elemento-dim { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-3); }
+
+.elemento-actions { display: flex; gap: 6px; align-items: center; }
+
+.elemento-vol {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.btn-icon {
+  width: 32px; height: 32px; min-height: 32px;
+  padding: 0; flex-shrink: 0;
+  background: transparent; color: var(--ink-3);
+  border: 1px solid var(--line);
+}
+
+.btn-icon:hover { background: var(--bg-card); color: var(--ink); }
+
+.btn-add-element {
+  width: 100%;
+  background: var(--bg-soft);
+  color: var(--ink-2);
+  border: 1px dashed var(--line-2);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.btn-add-element:hover {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  border-style: solid;
+}
+
+.elem-armado-section {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+  margin-bottom: 6px;
+}
+
+.elem-armado-title {
+  font-size: 12px; font-weight: 600;
+  color: var(--accent-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+
+.elemento-armado {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+
+/* MODAL */
+.modal-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(13, 17, 23, 0.5);
+  z-index: 100;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-backdrop.open { display: flex; }
+
+.modal {
+  background: var(--bg);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 20px 18px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  width: 100%; max-width: 540px;
+  max-height: 90vh; overflow-y: auto;
+}
+
+@media (min-width: 700px) {
+  .modal-backdrop { align-items: center; }
+  .modal {
+    border-radius: var(--radius);
+    max-height: 80vh;
+    padding: 24px;
+  }
+}
+
+.modal-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-title {
+  font-size: 16px; font-weight: 600; color: var(--ink);
+}
+
+.modal-close {
+  background: transparent; border: 0; color: var(--ink-3);
+  width: 32px; height: 32px; min-height: 32px; padding: 0;
+  font-size: 22px; line-height: 1;
+}
+
+/* INFO HELPER */
+.helper-text {
+  font-size: 12px; color: var(--ink-3); line-height: 1.45;
+  margin-top: 8px;
+}
+
+.helper-text.info {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+/* TOTALES POR PARTIDA */
+.partida-total {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 16px;
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  margin-top: 14px;
+}
+
+.partida-total-label {
+  font-size: 13px; font-weight: 600; color: var(--accent-ink);
+}
+
+.partida-total-amount {
+  font-size: 18px; font-weight: 700; color: var(--accent-ink);
+  font-variant-numeric: tabular-nums; letter-spacing: -0.015em;
+}
+
+/* RESUMEN FINAL */
+.resumen-final {
+  margin-top: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.resumen-title {
+  font-size: 15px; font-weight: 600; color: var(--ink);
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 10px;
+}
+
+.resumen-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0;
+  font-size: 13px;
+  border-bottom: 1px dashed var(--line);
+}
+
+.resumen-row:last-of-type { border-bottom: 0; }
+
+.resumen-row .label { color: var(--ink-2); }
+.resumen-row .label.dim { color: var(--ink-4); }
+.resumen-row .val { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.resumen-grand {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 16px 18px;
+  background: #0d1117; color: #ffffff;
+  border-radius: var(--radius-sm);
+}
+
+.resumen-grand-label {
+  font-size: 13px; font-weight: 500; letter-spacing: 0.01em;
+  color: #ffffff;
+}
+
+.resumen-grand-amount {
+  font-size: 24px; font-weight: 700;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .resumen-grand {
+    background: var(--accent);
+    color: #ffffff;
+  }
+  .resumen-grand-label, .resumen-grand-amount { color: #ffffff; }
+}
+
+/* PROYECTO */
+.proyecto-input {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  padding: 8px 0 !important;
+}
+
+.proyecto-input:focus { box-shadow: none !important; border-bottom-color: var(--accent) !important; }
+
+/* DARK MODE */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --bg-card: #161b22;
+    --ink: #f0f3f6;
+    --ink-2: #b8c0c8;
+    --ink-3: #7d858e;
+    --ink-4: #4a5057;
+    --line: #262d36;
+    --line-2: #353d47;
+    --accent: #4d8aff;
+    --accent-soft: #1a2540;
+    --accent-ink: #7ea7ff;
+    --warn-bg: #2a2114;
+    --warn-line: #c4892a;
+    --warn-ink: #e6b86a;
+    --good-bg: #15301d;
+    --good-ink: #76c98c;
+  }
+}
+
+@media print {
+  .partida-head, .summary-bar, footer, .actions { display: none; }
+  .partida { page-break-inside: avoid; }
+  .partida-body { display: block !important; border-top: 0 !important; }
+}
+
+/* FOOTER */
+footer {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  font-size: 12px; color: var(--ink-3);
+  line-height: 1.6;
+}
+
+.footer-credit {
+  display: flex; justify-content: space-between; flex-wrap: wrap;
+  gap: 8px; margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+}
+
+footer strong { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <header class="pro-header">
+    <div class="pro-header-inner">
+      <div class="pro-identity">
+        <div class="pro-avatar">AC</div>
+        <div class="pro-info">
+          <div class="pro-name">Arq. Alvaro Chapa Villarreal</div>
+          <div class="pro-meta">
+            <span class="pro-meta-item">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
+              WhatsApp 81 2289 4100
+            </span>
+            <span class="pro-meta-sep">·</span>
+            <span class="pro-meta-item">Cédula Prof. 2531610</span>
+          </div>
+        </div>
+      </div>
+      <div class="pro-badge">Cuantificador de obra</div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <h1>Cantidades y costos</h1>
+    <p class="hero-sub">Concreto, muros, pisos, zoclos, pintura y acabados. Precios editables guardados localmente.</p>
+    <input type="text" id="proyecto-nombre" class="proyecto-input" placeholder="Nombre del proyecto…" style="margin-top:14px;">
+    <div class="hero-date" id="header-fecha"></div>
+  </div>
+
+  <!-- RESUMEN GLOBAL -->
+  <div class="summary-bar">
+    <div class="summary-total">
+      <div class="summary-label">Total estimado</div>
+      <div class="summary-amount" id="total-global">$0</div>
+    </div>
+    <div class="summary-actions">
+      <button class="primary small" onclick="exportarPDF()">↓ PDF</button>
+      <button class="secondary small" onclick="reiniciarTodo()">Reiniciar</button>
+    </div>
+  </div>
+
+  <!-- PARTIDA 01: CONCRETO -->
+  <div class="partida" id="p-concreto">
+    <div class="partida-head" onclick="togglePartida('p-concreto')">
+      <span class="partida-num">01</span>
+      <div style="flex:1">
+        <div class="partida-title">Concreto + acero</div>
+        <div class="partida-subtitle">Por elemento, con armado configurable</div>
+      </div>
+      <div class="partida-amount zero" id="amt-concreto">$0</div>
+      <div class="partida-toggle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+      </div>
+    </div>
+    <div class="partida-body">
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="conc-resistencia">Resistencia f'c</label>
+          <select id="conc-resistencia" onchange="recalcConcreto()">
+            <option value="100">100 kg/cm² (plantilla)</option>
+            <option value="150">150 kg/cm² (firmes)</option>
+            <option value="200" selected>200 kg/cm² (estándar)</option>
+            <option value="250">250 kg/cm² (estructural)</option>
+            <option value="300">300 kg/cm² (alto desempeño)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="conc-merma">Merma (%)</label>
+          <input type="number" id="conc-merma" value="5" min="0" max="20" step="1" inputmode="numeric" oninput="recalcConcreto()">
+        </div>
+      </div>
+
+      <div class="elementos-list" id="conc-elementos"></div>
+
+      <button class="btn-add-element" onclick="abrirModalElemento()">＋ Agregar elemento</button>
+
+      <div class="materiales-table" id="conc-materiales"></div>
+
+      <div class="partida-total">
+        <span class="partida-total-label">Total partida</span>
+        <span class="partida-total-amount" id="conc-total">$0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTIDA 02: MUROS -->
+  <div class="partida" id="p-muros">
+    <div class="partida-head" onclick="togglePartida('p-muros')">
+      <span class="partida-num">02</span>
+      <div style="flex:1">
+        <div class="partida-title">Muros y mampostería</div>
+        <div class="partida-subtitle">Block hueco, ladrillo, mortero, refuerzo</div>
+      </div>
+      <div class="partida-amount zero" id="amt-muros">$0</div>
+      <div class="partida-toggle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+      </div>
+    </div>
+    <div class="partida-body">
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="mur-tipo">Tipo de pieza</label>
+          <select id="mur-tipo" onchange="recalcMuros()">
+            <option value="block4">Block hueco 4" (10×20×40)</option>
+            <option value="block6" selected>Block hueco 6" (15×20×40)</option>
+            <option value="block8">Block hueco 8" (20×20×40)</option>
+            <option value="ladrillo">Ladrillo rojo recocido (7×14×28)</option>
+            <option value="tabique">Tabique común (6×12×24)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="mur-area">Área de muro (m²)</label>
+          <input type="number" id="mur-area" value="" placeholder="0" min="0" step="0.1" inputmode="decimal" oninput="recalcMuros()">
+        </div>
+      </div>
+
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="mur-castillos">Castillos cada (m)</label>
+          <input type="number" id="mur-castillos" value="3" min="0" step="0.1" inputmode="decimal" oninput="recalcMuros()">
+        </div>
+        <div class="field">
+          <label for="mur-altura">Altura promedio (m)</label>
+          <input type="number" id="mur-altura" value="2.7" min="0" step="0.1" inputmode="decimal" oninput="recalcMuros()">
+        </div>
+      </div>
+
+      <p class="helper-text">El cálculo incluye mortero de pega, cemento, arena, cal hidratada y varilla #3 para castillos.</p>
+
+      <div class="materiales-table" id="mur-materiales"></div>
+
+      <div class="partida-total">
+        <span class="partida-total-label">Total partida</span>
+        <span class="partida-total-amount" id="mur-total">$0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTIDA 03: PISOS -->
+  <div class="partida" id="p-pisos">
+    <div class="partida-head" onclick="togglePartida('p-pisos')">
+      <span class="partida-num">03</span>
+      <div style="flex:1">
+        <div class="partida-title">Pisos cerámicos / porcelánicos</div>
+        <div class="partida-subtitle">Por área y formato de pieza</div>
+      </div>
+      <div class="partida-amount zero" id="amt-pisos">$0</div>
+      <div class="partida-toggle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+      </div>
+    </div>
+    <div class="partida-body">
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="pis-area">Área (m²)</label>
+          <input type="number" id="pis-area" value="" placeholder="0" min="0" step="0.1" inputmode="decimal" oninput="recalcPisos()">
+        </div>
+        <div class="field">
+          <label for="pis-formato">Formato</label>
+          <select id="pis-formato" onchange="recalcPisos()">
+            <option value="20x20">20 × 20 cm</option>
+            <option value="30x30">30 × 30 cm</option>
+            <option value="45x45">45 × 45 cm</option>
+            <option value="60x60" selected>60 × 60 cm</option>
+            <option value="80x80">80 × 80 cm</option>
+            <option value="60x120">60 × 120 cm</option>
+            <option value="20x120">20 × 120 cm (madera)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="pis-merma">Merma (%)</label>
+          <input type="number" id="pis-merma" value="10" min="0" max="25" step="1" inputmode="numeric" oninput="recalcPisos()">
+        </div>
+        <div class="field">
+          <label for="pis-precio-m2">$ piso por m²</label>
+          <input type="number" id="pis-precio-m2" value="350" min="0" step="1" inputmode="decimal" oninput="recalcPisos()">
+        </div>
+      </div>
+
+      <p class="helper-text">Merma típica: 7-10% en formatos pequeños, 10-15% en formatos grandes y diagonales.</p>
+
+      <div class="materiales-table" id="pis-materiales"></div>
+
+      <div class="partida-total">
+        <span class="partida-total-label">Total partida</span>
+        <span class="partida-total-amount" id="pis-total">$0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTIDA 04: ZOCLOS -->
+  <div class="partida" id="p-zoclos">
+    <div class="partida-head" onclick="togglePartida('p-zoclos')">
+      <span class="partida-num">04</span>
+      <div style="flex:1">
+        <div class="partida-title">Zoclos</div>
+        <div class="partida-subtitle">Perímetro − puertas + fileteo de marcos</div>
+      </div>
+      <div class="partida-amount zero" id="amt-zoclos">$0</div>
+      <div class="partida-toggle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+      </div>
+    </div>
+    <div class="partida-body">
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="zoc-perimetro">Perímetro total (m)</label>
+          <input type="number" id="zoc-perimetro" value="" placeholder="0" min="0" step="0.1" inputmode="decimal" oninput="recalcZoclos()">
+        </div>
+        <div class="field">
+          <label for="zoc-tipo">Tipo</label>
+          <select id="zoc-tipo" onchange="recalcZoclos()">
+            <option value="ceramico" selected>Cerámico (igual que piso)</option>
+            <option value="mdf">MDF / madera</option>
+            <option value="pvc">PVC</option>
+            <option value="aluminio">Aluminio</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-row cols-3">
+        <div class="field">
+          <label for="zoc-num-puertas">Núm. de puertas</label>
+          <input type="number" id="zoc-num-puertas" value="" placeholder="0" min="0" step="1" inputmode="numeric" oninput="recalcZoclos()">
+        </div>
+        <div class="field">
+          <label for="zoc-ancho-puerta">Ancho puerta (m)</label>
+          <input type="number" id="zoc-ancho-puerta" value="0.9" min="0" step="0.05" inputmode="decimal" oninput="recalcZoclos()">
+        </div>
+        <div class="field">
+          <label for="zoc-altura">Alto fileteo (m)</label>
+          <input type="number" id="zoc-altura" value="2.1" min="0" step="0.1" inputmode="decimal" oninput="recalcZoclos()">
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="field">
+          <label for="zoc-precio-ml">$ zoclo por ml</label>
+          <input type="number" id="zoc-precio-ml" value="120" min="0" step="1" inputmode="decimal" oninput="recalcZoclos()">
+        </div>
+      </div>
+
+      <p class="helper-text">Fileteo: piezas verticales en los marcos de cada puerta (2 lados × altura). El perímetro se descuenta por el ancho de las puertas.</p>
+
+      <div class="materiales-table" id="zoc-materiales"></div>
+
+      <div class="partida-total">
+        <span class="partida-total-label">Total partida</span>
+        <span class="partida-total-amount" id="zoc-total">$0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTIDA 05: APLANADOS -->
+  <div class="partida" id="p-aplanados">
+    <div class="partida-head" onclick="togglePartida('p-aplanados')">
+      <span class="partida-num">05</span>
+      <div style="flex:1">
+        <div class="partida-title">Aplanados</div>
+        <div class="partida-subtitle">Mortero cemento-arena por m² de muro</div>
+      </div>
+      <div class="partida-amount zero" id="amt-aplanados">$0</div>
+      <div class="partida-toggle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+      </div>
+    </div>
+    <div class="partida-body">
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="apl-area">Área a aplanar (m²)</label>
+          <input type="number" id="apl-area" value="" placeholder="0" min="0" step="0.1" inputmode="decimal" oninput="recalcAplanados()">
+        </div>
+        <div class="field">
+          <label for="apl-espesor">Espesor (cm)</label>
+          <input type="number" id="apl-espesor" value="2" min="0.5" max="5" step="0.5" inputmode="decimal" oninput="recalcAplanados()">
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="field">
+          <label for="apl-prop">Proporción cemento : arena</label>
+          <select id="apl-prop" onchange="recalcAplanados()">
+            <option value="1:3">1 : 3 (alta resistencia)</option>
+            <option value="1:4" selected>1 : 4 (estándar)</option>
+            <option value="1:5">1 : 5 (común)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="materiales-table" id="apl-materiales"></div>
+
+      <div class="partida-total">
+        <span class="partida-total-label">Total partida</span>
+        <span class="partida-total-amount" id="apl-total">$0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTIDA 06: YESO -->
+  <div class="partida" id="p-yeso">
+    <div class="partida-head" onclick="togglePartida('p-yeso')">
+      <span class="partida-num">06</span>
+      <div style="flex:1">
+        <div class="partida-title">Yeso</div>
+        <div class="partida-subtitle">Muros y plafones interiores</div>
+      </div>
+      <div class="partida-amount zero" id="amt-yeso">$0</div>
+      <div class="partida-toggle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+      </div>
+    </div>
+    <div class="partida-body">
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="yes-area">Área (m²)</label>
+          <input type="number" id="yes-area" value="" placeholder="0" min="0" step="0.1" inputmode="decimal" oninput="recalcYeso()">
+        </div>
+        <div class="field">
+          <label for="yes-espesor">Espesor (cm)</label>
+          <input type="number" id="yes-espesor" value="1.5" min="0.5" max="3" step="0.1" inputmode="decimal" oninput="recalcYeso()">
+        </div>
+      </div>
+
+      <p class="helper-text">Rendimiento típico: 1 saco de yeso (40 kg) cubre ~3 m² a 1.5 cm de espesor.</p>
+
+      <div class="materiales-table" id="yes-materiales"></div>
+
+      <div class="partida-total">
+        <span class="partida-total-label">Total partida</span>
+        <span class="partida-total-amount" id="yes-total">$0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTIDA 07: PINTURA -->
+  <div class="partida" id="p-pintura">
+    <div class="partida-head" onclick="togglePartida('p-pintura')">
+      <span class="partida-num">07</span>
+      <div style="flex:1">
+        <div class="partida-title">Pintura</div>
+        <div class="partida-subtitle">Vinílica, esmalte, primer, manos múltiples</div>
+      </div>
+      <div class="partida-amount zero" id="amt-pintura">$0</div>
+      <div class="partida-toggle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+      </div>
+    </div>
+    <div class="partida-body">
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="pin-area">Área (m²)</label>
+          <input type="number" id="pin-area" value="" placeholder="0" min="0" step="0.1" inputmode="decimal" oninput="recalcPintura()">
+        </div>
+        <div class="field">
+          <label for="pin-tipo">Tipo</label>
+          <select id="pin-tipo" onchange="recalcPintura()">
+            <option value="vinilica" selected>Vinílica interior</option>
+            <option value="vinilica-ext">Vinílica exterior</option>
+            <option value="esmalte">Esmalte (madera/metal)</option>
+            <option value="impermeabilizante">Impermeabilizante muros</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-row cols-3">
+        <div class="field">
+          <label for="pin-textura">Textura</label>
+          <select id="pin-textura" onchange="recalcPintura()">
+            <option value="lisa" selected>Lisa</option>
+            <option value="texturizada">Texturizada</option>
+            <option value="rugosa">Rugosa / gotelé</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="pin-manos">Manos</label>
+          <input type="number" id="pin-manos" value="2" min="1" max="4" step="1" inputmode="numeric" oninput="recalcPintura()">
+        </div>
+        <div class="field">
+          <label for="pin-primer">Primer</label>
+          <select id="pin-primer" onchange="recalcPintura()">
+            <option value="0">No aplica</option>
+            <option value="1" selected>1 mano</option>
+            <option value="2">2 manos</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="materiales-table" id="pin-materiales"></div>
+
+      <div class="partida-total">
+        <span class="partida-total-label">Total partida</span>
+        <span class="partida-total-amount" id="pin-total">$0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTIDA 08: IMPERMEABILIZANTE -->
+  <div class="partida" id="p-imper">
+    <div class="partida-head" onclick="togglePartida('p-imper')">
+      <span class="partida-num">08</span>
+      <div style="flex:1">
+        <div class="partida-title">Impermeabilizante</div>
+        <div class="partida-subtitle">Azoteas y losas expuestas</div>
+      </div>
+      <div class="partida-amount zero" id="amt-imper">$0</div>
+      <div class="partida-toggle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+      </div>
+    </div>
+    <div class="partida-body">
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="imp-area">Área de azotea (m²)</label>
+          <input type="number" id="imp-area" value="" placeholder="0" min="0" step="0.1" inputmode="decimal" oninput="recalcImper()">
+        </div>
+        <div class="field">
+          <label for="imp-tipo">Sistema</label>
+          <select id="imp-tipo" onchange="recalcImper()">
+            <option value="acrilico-3a" selected>Acrílico 3 años</option>
+            <option value="acrilico-5a">Acrílico 5 años</option>
+            <option value="acrilico-10a">Acrílico 10 años</option>
+            <option value="prefabricado">Prefabricado (asfáltico en rollo)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="materiales-table" id="imp-materiales"></div>
+
+      <div class="partida-total">
+        <span class="partida-total-label">Total partida</span>
+        <span class="partida-total-amount" id="imp-total">$0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESUMEN FINAL -->
+  <div class="resumen-final">
+    <div class="resumen-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Resumen consolidado
+    </div>
+    <div id="resumen-rows"></div>
+    <div class="resumen-grand">
+      <span class="resumen-grand-label">Total general estimado</span>
+      <span class="resumen-grand-amount" id="resumen-grand">$0</span>
+    </div>
+    <p class="helper-text" style="margin-top: 14px;">Las cantidades incluyen mermas típicas. Los costos son referenciales y editables. Verificar precios actuales con proveedores y considerar mano de obra, equipo y herramienta por separado.</p>
+  </div>
+
+  <footer>
+    <div>Cuantificación referencial para anteproyecto. No sustituye un análisis de precios unitarios completo. Cantidades calculadas según rendimientos típicos de mercado en la Zona Metropolitana de Monterrey.</div>
+    <div class="footer-credit">
+      <span><strong>Arq. Alvaro Chapa Villarreal</strong> · Cédula Prof. 2531610</span>
+      <span>v 1.2</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- MODAL ELEMENTO CONCRETO -->
+<div class="modal-backdrop" id="modal-elemento">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Agregar elemento de concreto</div>
+      <button class="modal-close" onclick="cerrarModalElemento()">×</button>
+    </div>
+
+    <div class="input-row">
+      <div class="field">
+        <label for="el-tipo">Tipo de elemento</label>
+        <select id="el-tipo" onchange="actualizarCamposElemento()">
+          <option value="zapata">Zapata aislada</option>
+          <option value="zapata-corrida">Zapata corrida</option>
+          <option value="dala">Dala / cadena</option>
+          <option value="castillo">Castillo</option>
+          <option value="columna">Columna</option>
+          <option value="trabe">Trabe</option>
+          <option value="losa">Losa maciza</option>
+          <option value="firme">Firme / piso de concreto</option>
+          <option value="muro-concreto">Muro de concreto</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="el-campos"></div>
+
+    <div class="input-row">
+      <div class="field">
+        <label for="el-cantidad">Cantidad de elementos</label>
+        <input type="number" id="el-cantidad" value="1" min="1" step="1" inputmode="numeric">
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
+      <button class="secondary" onclick="cerrarModalElemento()">Cancelar</button>
+      <button class="primary" onclick="guardarElemento()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== PRECIOS BASE (editables, persisten en localStorage) ==========
+const PRECIOS_DEFAULT = {
+  // Concreto
+  cemento_50kg: 285,        // saco 50 kg
+  cemento_mortero_50kg: 235, // mortero
+  arena_m3: 480,
+  grava_m3: 510,
+  agua_m3: 50,
+  // Muros
+  block4_pza: 14.5,
+  block6_pza: 18,
+  block8_pza: 25,
+  ladrillo_pza: 4.5,
+  tabique_pza: 3.8,
+  cal_25kg: 110,
+  // Varilla por pieza de 12 m (precios de mercado MTY)
+  varilla_2_pza: 75,    // #2 (1/4")
+  varilla_3_pza: 145,   // #3 (3/8")
+  varilla_4_pza: 245,   // #4 (1/2")
+  varilla_5_pza: 380,   // #5 (5/8")
+  varilla_6_pza: 540,   // #6 (3/4")
+  varilla_8_pza: 940,   // #8 (1")
+  alambre_recocido_kg: 38,
+  malla_electro_66_1010_m2: 38,  // 6×6 / 10-10 estándar 6 x 2.40
+  // legacy compat
+  varilla_3_8: 145,
+  // Pisos
+  adhesivo_20kg: 280,
+  boquilla_2kg: 95,
+  // Zoclos (precio por ml está en input)
+  // Yeso
+  yeso_40kg: 150,
+  // Pintura
+  vinilica_19l: 1450,
+  vinilica_ext_19l: 1850,
+  esmalte_4l: 580,
+  imper_muro_19l: 2300,
+  primer_19l: 1280,
+  // Impermeabilizante
+  imper_3a_19l: 1850,
+  imper_5a_19l: 2450,
+  imper_10a_19l: 3650,
+  imper_prefabricado_m2: 145,
+  malla_refuerzo_m2: 18,
+  fibra_de_vidrio_m: 22,
+};
+
+let precios = {...PRECIOS_DEFAULT};
+try {
+  const saved = localStorage.getItem('cuantificador-precios');
+  if (saved) precios = {...PRECIOS_DEFAULT, ...JSON.parse(saved)};
+} catch(e) {}
+
+let proyectoNombre = '';
+try {
+  proyectoNombre = localStorage.getItem('cuantificador-proyecto') || '';
+} catch(e) {}
+
+const totales = {
+  concreto: 0, muros: 0, pisos: 0, zoclos: 0,
+  aplanados: 0, yeso: 0, pintura: 0, imper: 0
+};
+
+// ========== UTILIDADES ==========
+function fmt(n) {
+  if (!isFinite(n) || n === 0) return '0';
+  if (n < 1) return n.toFixed(2);
+  if (n < 10) return n.toFixed(1);
+  return Math.round(n).toLocaleString();
+}
+
+function money(n) {
+  if (!isFinite(n) || n === 0) return '$0';
+  return '$' + Math.round(n).toLocaleString();
+}
+
+function guardarPrecios() {
+  try { localStorage.setItem('cuantificador-precios', JSON.stringify(precios)); } catch(e) {}
+}
+
+function actualizarPrecio(key, val) {
+  const n = parseFloat(val) || 0;
+  precios[key] = n;
+  guardarPrecios();
+  recalcularTodo();
+}
+
+function renderTabla(materiales, containerId, totalKey) {
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  // Verificar si hay alguna cantidad real
+  const hayDatos = materiales.length > 0 && materiales.some(m => m.cantidad > 0);
+  if (!hayDatos) {
+    cont.innerHTML = '<div class="mat-row"><div style="grid-column:1/-1;text-align:center;color:var(--ink-3);font-size:12px;padding:14px 0;font-style:italic">Captura los datos para calcular materiales</div></div>';
+    totales[totalKey] = 0;
+    return;
+  }
+  let html = '<div class="mat-header"><div>Material</div><div style="text-align:right">Cantidad</div><div style="text-align:right">$ Unit.</div><div style="text-align:right">Importe</div></div>';
+  let total = 0;
+  for (const m of materiales) {
+    const importe = m.cantidad * m.precio;
+    total += importe;
+    const precioRaw = m.precio || 0;
+    html += `<div class="mat-row">
+      <div>
+        <div class="mat-name">${m.nombre}</div>
+        <div class="mat-name-sub" data-precio="${Math.round(precioRaw)}">${m.unidad}</div>
+      </div>
+      <div class="mat-cantidad">${fmt(m.cantidad)}</div>
+      <div><input type="number" class="mat-precio-input" value="${precioRaw}" min="0" step="1" oninput="actualizarPrecio('${m.precioKey}', this.value)"></div>
+      <div class="mat-importe">${money(importe)}</div>
+    </div>`;
+  }
+  html += `<div class="mat-row total">
+    <div><div class="mat-name">Subtotal</div></div>
+    <div></div>
+    <div></div>
+    <div class="mat-importe">${money(total)}</div>
+  </div>`;
+  cont.innerHTML = html;
+  totales[totalKey] = total;
+}
+
+// ========== CONCRETO ==========
+const dosificaciones = {
+  100: { cemento: 7,  arena: 0.55, grava: 0.85, agua: 0.21 },
+  150: { cemento: 8.5,arena: 0.55, grava: 0.85, agua: 0.21 },
+  200: { cemento: 9.5,arena: 0.52, grava: 0.85, agua: 0.20 },
+  250: { cemento: 11, arena: 0.50, grava: 0.85, agua: 0.20 },
+  300: { cemento: 12.5,arena: 0.48,grava: 0.85, agua: 0.19 }
+};
+
+let elementos = [];
+let editandoElemIdx = -1;
+
+// Pesos teóricos de varilla en kg/m
+const pesoVarilla = {
+  '2': 0.248, '3': 0.557, '4': 0.994, '5': 1.552, '6': 2.235, '8': 3.973
+};
+
+// Precio por pieza de 12m (referencia al diccionario de precios)
+const precioKeyVarilla = {
+  '2': 'varilla_2_pza', '3': 'varilla_3_pza', '4': 'varilla_4_pza',
+  '5': 'varilla_5_pza', '6': 'varilla_6_pza', '8': 'varilla_8_pza'
+};
+
+const labelVarilla = {
+  '2': '#2 (1/4")', '3': '#3 (3/8")', '4': '#4 (1/2")',
+  '5': '#5 (5/8")', '6': '#6 (3/4")', '8': '#8 (1")'
+};
+
+const tiposElemento = {
+  zapata:        { label: 'Zapata aislada',     campos: ['largo','ancho','peralte'], armado: 'parrilla',  longitudArmado: 'largo' },
+  'zapata-corrida': { label: 'Zapata corrida',  campos: ['largo','ancho','peralte'], armado: 'parrilla',  longitudArmado: 'largo' },
+  dala:          { label: 'Dala / cadena',      campos: ['largo','ancho','peralte'], armado: 'longitudinal', longitudArmado: 'largo' },
+  castillo:      { label: 'Castillo',           campos: ['altura','ancho','peralte'], armado: 'longitudinal', longitudArmado: 'altura' },
+  columna:       { label: 'Columna',            campos: ['altura','ancho','peralte'], armado: 'longitudinal', longitudArmado: 'altura' },
+  trabe:         { label: 'Trabe',              campos: ['largo','ancho','peralte'], armado: 'longitudinal', longitudArmado: 'largo' },
+  losa:          { label: 'Losa maciza',        campos: ['largo','ancho','peralte'], armado: 'losa-firme', longitudArmado: 'largo' },
+  firme:         { label: 'Firme / piso',       campos: ['largo','ancho','peralte'], armado: 'losa-firme', longitudArmado: 'largo' },
+  'muro-concreto': { label: 'Muro de concreto', campos: ['largo','altura','peralte'], armado: 'parrilla', longitudArmado: 'largo' }
+};
+
+const labelCampos = {
+  largo: 'Largo (m)', ancho: 'Ancho (m)', peralte: 'Espesor / peralte (m)', altura: 'Altura (m)'
+};
+
+const valoresDefault = {
+  zapata:        { largo: 1.2, ancho: 1.2, peralte: 0.3 },
+  'zapata-corrida': { largo: 10, ancho: 0.4, peralte: 0.25 },
+  dala:          { largo: 10, ancho: 0.15, peralte: 0.2 },
+  castillo:      { altura: 2.7, ancho: 0.15, peralte: 0.15 },
+  columna:       { altura: 3, ancho: 0.3, peralte: 0.3 },
+  trabe:         { largo: 5, ancho: 0.25, peralte: 0.35 },
+  losa:          { largo: 6, ancho: 4, peralte: 0.12 },
+  firme:         { largo: 10, ancho: 5, peralte: 0.08 },
+  'muro-concreto': { largo: 6, altura: 2.7, peralte: 0.15 }
+};
+
+function abrirModalElemento(idx) {
+  editandoElemIdx = idx !== undefined ? idx : -1;
+  if (editandoElemIdx >= 0) {
+    const e = elementos[editandoElemIdx];
+    document.getElementById('el-tipo').value = e.tipo;
+    actualizarCamposElemento();
+    for (const campo of tiposElemento[e.tipo].campos) {
+      const inp = document.getElementById('el-' + campo);
+      if (inp) inp.value = e[campo];
+    }
+    document.getElementById('el-cantidad').value = e.cantidad;
+    // Precargar armado
+    const a = e.armado || {};
+    if (a.tipo === 'losa-firme') {
+      if (a.sepParrilla !== undefined) document.getElementById('el-sep-parrilla').value = a.sepParrilla;
+      if (a.numCamas !== undefined) document.getElementById('el-num-camas').value = a.numCamas;
+    } else if (a.tipo === 'longitudinal') {
+      if (a.numLongitudinales !== undefined) document.getElementById('el-arm-num').value = a.numLongitudinales;
+      if (a.diamLong !== undefined) document.getElementById('el-arm-diam').value = a.diamLong;
+      if (a.diamEstribo !== undefined) document.getElementById('el-est-diam').value = a.diamEstribo;
+      if (a.sepEstribo !== undefined) document.getElementById('el-est-sep').value = a.sepEstribo;
+    } else if (a.tipo === 'parrilla') {
+      if (a.diamLong !== undefined) document.getElementById('el-arm-diam').value = a.diamLong;
+      if (a.sepParrilla !== undefined) document.getElementById('el-arm-sep').value = a.sepParrilla;
+      if (a.numCamas !== undefined) document.getElementById('el-num-camas').value = a.numCamas;
+    }
+  } else {
+    document.getElementById('el-tipo').value = 'zapata';
+    actualizarCamposElemento();
+    document.getElementById('el-cantidad').value = 1;
+  }
+  document.getElementById('modal-elemento').classList.add('open');
+}
+
+function cerrarModalElemento() {
+  document.getElementById('modal-elemento').classList.remove('open');
+}
+
+function actualizarCamposElemento() {
+  const tipo = document.getElementById('el-tipo').value;
+  const cont = document.getElementById('el-campos');
+  const def = valoresDefault[tipo] || {};
+  const tipoDef = tiposElemento[tipo];
+  let html = '<div class="input-row cols-3">';
+  for (const c of tipoDef.campos) {
+    html += `<div class="field"><label for="el-${c}">${labelCampos[c]}</label><input type="number" id="el-${c}" value="${def[c] || 0}" min="0" step="0.01" inputmode="decimal"></div>`;
+  }
+  html += '</div>';
+
+  // Sección de armado según el tipo
+  if (tipoDef.armado === 'losa-firme') {
+    // Para firmes y losas: auto-detecta por peralte
+    html += `<div class="elem-armado-section">
+      <div class="elem-armado-title">Armado (auto-detectado por peralte)</div>
+      <div class="helper-text info" style="margin-bottom:10px">
+        Peralte 8–12 cm: malla electrosoldada 6×6/10-10. Peralte &gt; 12 cm: parrilla de varilla #3 a separación configurable.
+      </div>
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="el-sep-parrilla">Separación parrilla (cm)</label>
+          <input type="number" id="el-sep-parrilla" value="20" min="10" max="40" step="1" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label for="el-num-camas">Camas de acero</label>
+          <select id="el-num-camas">
+            <option value="1">1 cama</option>
+            <option value="2" selected>2 camas (lecho sup. e inf.)</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+  } else if (tipoDef.armado === 'longitudinal') {
+    // Castillos, columnas, trabes, dalas: longitudinales + estribos
+    html += `<div class="elem-armado-section">
+      <div class="elem-armado-title">Armado del elemento</div>
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="el-arm-num">Núm. de varillas longitudinales</label>
+          <input type="number" id="el-arm-num" value="4" min="2" max="20" step="1" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label for="el-arm-diam">Diámetro</label>
+          <select id="el-arm-diam">
+            <option value="2">#2 (1/4")</option>
+            <option value="3" selected>#3 (3/8")</option>
+            <option value="4">#4 (1/2")</option>
+            <option value="5">#5 (5/8")</option>
+            <option value="6">#6 (3/4")</option>
+            <option value="8">#8 (1")</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="el-est-diam">Estribo diámetro</label>
+          <select id="el-est-diam">
+            <option value="2" selected>#2 (1/4")</option>
+            <option value="3">#3 (3/8")</option>
+            <option value="0">Sin estribos</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="el-est-sep">Estribo cada (cm)</label>
+          <input type="number" id="el-est-sep" value="20" min="5" max="50" step="1" inputmode="numeric">
+        </div>
+      </div>
+    </div>`;
+  } else if (tipoDef.armado === 'parrilla') {
+    // Zapatas y muros: parrilla en ambas direcciones
+    html += `<div class="elem-armado-section">
+      <div class="elem-armado-title">Armado del elemento</div>
+      <div class="input-row cols-2">
+        <div class="field">
+          <label for="el-arm-diam">Diámetro de varilla</label>
+          <select id="el-arm-diam">
+            <option value="3">#3 (3/8")</option>
+            <option value="4" selected>#4 (1/2")</option>
+            <option value="5">#5 (5/8")</option>
+            <option value="6">#6 (3/4")</option>
+            <option value="8">#8 (1")</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="el-arm-sep">Separación parrilla (cm)</label>
+          <input type="number" id="el-arm-sep" value="15" min="5" max="40" step="1" inputmode="numeric">
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="field">
+          <label for="el-num-camas">Camas de acero</label>
+          <select id="el-num-camas">
+            <option value="1" selected>1 cama (zapata aislada / corrida)</option>
+            <option value="2">2 camas (muro / zapata armada doble)</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  cont.innerHTML = html;
+}
+
+function guardarElemento() {
+  const tipo = document.getElementById('el-tipo').value;
+  const cantidad = Math.max(1, parseInt(document.getElementById('el-cantidad').value) || 1);
+  const dims = {};
+  const tipoDef = tiposElemento[tipo];
+  for (const c of tipoDef.campos) {
+    dims[c] = parseFloat(document.getElementById('el-' + c).value) || 0;
+  }
+
+  // Captura de armado
+  const armado = { tipo: tipoDef.armado };
+  if (tipoDef.armado === 'losa-firme') {
+    armado.sepParrilla = parseFloat(document.getElementById('el-sep-parrilla').value) || 20;
+    armado.numCamas = parseInt(document.getElementById('el-num-camas').value) || 2;
+  } else if (tipoDef.armado === 'longitudinal') {
+    armado.numLongitudinales = parseInt(document.getElementById('el-arm-num').value) || 4;
+    armado.diamLong = document.getElementById('el-arm-diam').value;
+    armado.diamEstribo = document.getElementById('el-est-diam').value;
+    armado.sepEstribo = parseFloat(document.getElementById('el-est-sep').value) || 20;
+  } else if (tipoDef.armado === 'parrilla') {
+    armado.diamLong = document.getElementById('el-arm-diam').value;
+    armado.sepParrilla = parseFloat(document.getElementById('el-arm-sep').value) || 15;
+    armado.numCamas = parseInt(document.getElementById('el-num-camas').value) || 1;
+  }
+
+  const obj = { tipo, cantidad, ...dims, armado };
+  if (editandoElemIdx >= 0) {
+    elementos[editandoElemIdx] = obj;
+  } else {
+    elementos.push(obj);
+  }
+  cerrarModalElemento();
+  renderElementos();
+  recalcConcreto();
+}
+
+function eliminarElemento(idx) {
+  elementos.splice(idx, 1);
+  renderElementos();
+  recalcConcreto();
+}
+
+function calcVolumenElemento(e) {
+  const def = tiposElemento[e.tipo];
+  if (!def) return 0;
+  const c = def.campos;
+  let v = 1;
+  for (const k of c) v *= (e[k] || 0);
+  return v * e.cantidad;
+}
+
+function describirArmado(e) {
+  const a = e.armado || {};
+  if (a.tipo === 'losa-firme') {
+    const peralteCm = (e.peralte || 0) * 100;
+    if (peralteCm <= 12 && peralteCm >= 8) {
+      return 'Malla electro 6×6/10-10';
+    } else if (peralteCm > 12) {
+      return `Parrilla #3 @ ${a.sepParrilla || 20} cm · ${a.numCamas || 2} camas`;
+    } else {
+      return 'Sin armado (peralte < 8 cm)';
+    }
+  } else if (a.tipo === 'longitudinal') {
+    let s = `${a.numLongitudinales || 4} ${labelVarilla[a.diamLong || '3']}`;
+    if (a.diamEstribo && a.diamEstribo !== '0') {
+      s += ` · est. ${labelVarilla[a.diamEstribo]} @ ${a.sepEstribo} cm`;
+    }
+    return s;
+  } else if (a.tipo === 'parrilla') {
+    return `Parrilla ${labelVarilla[a.diamLong || '4']} @ ${a.sepParrilla || 15} cm · ${a.numCamas || 1} cama${(a.numCamas || 1) > 1 ? 's' : ''}`;
+  }
+  return '';
+}
+
+function renderElementos() {
+  const cont = document.getElementById('conc-elementos');
+  if (elementos.length === 0) {
+    cont.innerHTML = '';
+    return;
+  }
+  let html = '';
+  elementos.forEach((e, i) => {
+    const def = tiposElemento[e.tipo];
+    const dims = def.campos.map(c => (e[c] || 0).toFixed(2)).join(' × ');
+    const vol = calcVolumenElemento(e);
+    const armadoTxt = describirArmado(e);
+    html += `<div class="elemento-item">
+      <div class="elemento-info">
+        <div class="elemento-tipo">${def.label}${e.cantidad > 1 ? ' × ' + e.cantidad : ''}</div>
+        <div class="elemento-dim">${dims} m  ·  ${vol.toFixed(2)} m³</div>
+        ${armadoTxt ? `<div class="elemento-armado">${armadoTxt}</div>` : ''}
+      </div>
+      <div class="elemento-actions">
+        <button class="btn-icon" onclick="abrirModalElemento(${i})" title="Editar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn-icon" onclick="eliminarElemento(${i})" title="Eliminar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    </div>`;
+  });
+  cont.innerHTML = html;
+}
+
+function calcAceroElemento(e) {
+  // Devuelve un objeto { malla_m2: 0, varillas: { '3': longitud_total_m, '4': ..., ... }, alambre_kg: 0 }
+  const result = { malla_m2: 0, varillas: {}, alambre_kg: 0 };
+  const a = e.armado || {};
+  const cant = e.cantidad || 1;
+
+  if (a.tipo === 'losa-firme') {
+    // Auto-detección por peralte
+    const peralteCm = (e.peralte || 0) * 100;
+    const area = (e.largo || 0) * (e.ancho || 0) * cant;
+    if (peralteCm <= 12 && peralteCm >= 8) {
+      // Malla electrosoldada con 10% merma
+      result.malla_m2 = area * 1.1;
+    } else if (peralteCm > 12) {
+      // Parrilla #3
+      const sep = (a.sepParrilla || 20) / 100; // m
+      const camas = a.numCamas || 2;
+      // Longitud de varilla en ambos sentidos por m²: aprox = 1/sep (en cada dirección)
+      // Total ml por m² = (1/sepX + 1/sepY) por cama
+      const mlPorM2 = (1/sep + 1/sep) * camas;
+      const totalMl = area * mlPorM2 * 1.05; // 5% merma traslapes
+      result.varillas['3'] = (result.varillas['3'] || 0) + totalMl;
+    }
+  } else if (a.tipo === 'longitudinal') {
+    const num = a.numLongitudinales || 4;
+    const diam = a.diamLong || '3';
+    const long = e[tiposElemento[e.tipo].longitudArmado] || 0;
+    // Longitud total (con dobleces y traslapes ~10%)
+    const mlLong = num * long * cant * 1.1;
+    result.varillas[diam] = (result.varillas[diam] || 0) + mlLong;
+
+    // Estribos (si aplican)
+    if (a.diamEstribo && a.diamEstribo !== '0' && a.sepEstribo > 0) {
+      // Perímetro del estribo (asumiendo recubrimiento de 2.5 cm cada lado)
+      const ancho = (e.ancho || 0.15) - 0.05;
+      const peralte = (e.peralte || 0.15) - 0.05;
+      const perimEstribo = 2 * (ancho + peralte) + 0.10; // +10cm ganchos
+      const numEstribos = Math.ceil(long / (a.sepEstribo / 100)) + 1;
+      const mlEstribo = perimEstribo * numEstribos * cant * 1.05;
+      result.varillas[a.diamEstribo] = (result.varillas[a.diamEstribo] || 0) + mlEstribo;
+    }
+  } else if (a.tipo === 'parrilla') {
+    const sep = (a.sepParrilla || 15) / 100;
+    const diam = a.diamLong || '4';
+    const camas = a.numCamas || 1;
+    const largo = e.largo || 0;
+    const ancho = e.ancho || e.altura || 0; // muros: altura
+    // Varillas en sentido X: cada (sep) m a lo largo del ancho, cubren el largo
+    const varillasX = Math.ceil(ancho / sep) + 1;
+    const mlX = varillasX * largo;
+    // Varillas en sentido Y: cada (sep) m a lo largo del largo, cubren el ancho
+    const varillasY = Math.ceil(largo / sep) + 1;
+    const mlY = varillasY * ancho;
+    const mlPorCama = (mlX + mlY) * 1.08; // 8% merma traslapes
+    const totalMl = mlPorCama * camas * cant;
+    result.varillas[diam] = (result.varillas[diam] || 0) + totalMl;
+  }
+
+  return result;
+}
+
+function recalcConcreto() {
+  const fc = document.getElementById('conc-resistencia').value;
+  const merma = (parseFloat(document.getElementById('conc-merma').value) || 0) / 100;
+  const dosif = dosificaciones[fc];
+
+  let volTotal = 0;
+  for (const e of elementos) volTotal += calcVolumenElemento(e);
+
+  // Si no hay elementos o volumen, devolver tabla vacía
+  if (elementos.length === 0 || volTotal <= 0) {
+    renderTabla([], 'conc-materiales', 'concreto');
+    document.getElementById('conc-total').textContent = money(0);
+    actualizarTotales();
+    return;
+  }
+
+  const volConMerma = volTotal * (1 + merma);
+
+  const cemento = volConMerma * dosif.cemento;
+  const arena = volConMerma * dosif.arena;
+  const grava = volConMerma * dosif.grava;
+  const agua = volConMerma * dosif.agua;
+
+  // Acero acumulado
+  let mallaTotal = 0;
+  const varillasMl = {}; // por diámetro
+  for (const e of elementos) {
+    const ac = calcAceroElemento(e);
+    mallaTotal += ac.malla_m2;
+    for (const d in ac.varillas) {
+      varillasMl[d] = (varillasMl[d] || 0) + ac.varillas[d];
+    }
+  }
+
+  const materiales = [
+    { nombre: 'Cemento gris CPC30R', unidad: 'sacos 50 kg', cantidad: cemento, precio: precios.cemento_50kg, precioKey: 'cemento_50kg' },
+    { nombre: 'Arena de río', unidad: 'm³', cantidad: arena, precio: precios.arena_m3, precioKey: 'arena_m3' },
+    { nombre: 'Grava 3/4"', unidad: 'm³', cantidad: grava, precio: precios.grava_m3, precioKey: 'grava_m3' },
+    { nombre: 'Agua', unidad: 'm³', cantidad: agua, precio: precios.agua_m3, precioKey: 'agua_m3' }
+  ];
+
+  // Agregar varillas (convertidas a piezas de 12 m)
+  const orden = ['2','3','4','5','6','8'];
+  for (const d of orden) {
+    if (varillasMl[d]) {
+      const piezas = Math.ceil(varillasMl[d] / 12);
+      const precioKey = precioKeyVarilla[d];
+      materiales.push({
+        nombre: 'Varilla ' + labelVarilla[d],
+        unidad: Math.round(varillasMl[d]) + ' ml · pzas 12 m',
+        cantidad: piezas,
+        precio: precios[precioKey],
+        precioKey: precioKey
+      });
+    }
+  }
+
+  // Malla electrosoldada
+  if (mallaTotal > 0) {
+    materiales.push({
+      nombre: 'Malla electrosoldada 6×6/10-10',
+      unidad: 'm² (rollos 6×2.40 m)',
+      cantidad: mallaTotal,
+      precio: precios.malla_electro_66_1010_m2,
+      precioKey: 'malla_electro_66_1010_m2'
+    });
+  }
+
+  // Alambre recocido para amarre (estimado: ~25g por m de varilla)
+  let mlVarillaTotal = 0;
+  for (const d in varillasMl) mlVarillaTotal += varillasMl[d];
+  if (mlVarillaTotal > 0) {
+    const alambreKg = Math.ceil(mlVarillaTotal * 0.025);
+    materiales.push({
+      nombre: 'Alambre recocido cal. 18',
+      unidad: 'kg (para amarre)',
+      cantidad: alambreKg,
+      precio: precios.alambre_recocido_kg,
+      precioKey: 'alambre_recocido_kg'
+    });
+  }
+
+  renderTabla(materiales, 'conc-materiales', 'concreto');
+  document.getElementById('conc-total').textContent = money(totales.concreto);
+  actualizarTotales();
+}
+
+// ========== MUROS ==========
+const muroPiezas = {
+  block4: { label: 'Block hueco 4"', pzaXm2: 12.5, precioKey: 'block4_pza', mortero_m3: 0.012 },
+  block6: { label: 'Block hueco 6"', pzaXm2: 12.5, precioKey: 'block6_pza', mortero_m3: 0.015 },
+  block8: { label: 'Block hueco 8"', pzaXm2: 12.5, precioKey: 'block8_pza', mortero_m3: 0.020 },
+  ladrillo: { label: 'Ladrillo rojo recocido', pzaXm2: 60, precioKey: 'ladrillo_pza', mortero_m3: 0.025 },
+  tabique: { label: 'Tabique común', pzaXm2: 75, precioKey: 'tabique_pza', mortero_m3: 0.022 }
+};
+
+function recalcMuros() {
+  const tipo = document.getElementById('mur-tipo').value;
+  const area = parseFloat(document.getElementById('mur-area').value) || 0;
+  const sepCastillos = parseFloat(document.getElementById('mur-castillos').value) || 0;
+  const altura = parseFloat(document.getElementById('mur-altura').value) || 0;
+
+  // Si no hay área capturada, mostrar tabla vacía
+  if (area <= 0) {
+    renderTabla([], 'mur-materiales', 'muros');
+    document.getElementById('mur-total').textContent = money(0);
+    actualizarTotales();
+    return;
+  }
+
+  const def = muroPiezas[tipo];
+  const piezas = area * def.pzaXm2 * 1.05;  // 5% merma
+
+  // mortero de pega
+  const morteroM3 = area * def.mortero_m3;
+  const cementoMortero = morteroM3 * 7.5;  // sacos por m³ de mortero proporción 1:5
+  const arenaMortero = morteroM3 * 1.05;
+  const cal = morteroM3 * 0.4;  // sacos cal por m³ de mortero
+
+  // varilla #3 para castillos: 4 varillas por castillo + estribos
+  const longMuro = altura > 0 ? area / altura : 0;
+  const numCastillos = (sepCastillos > 0 && longMuro > 0) ? Math.ceil(longMuro / sepCastillos) + 1 : 0;
+  const longTotalVarilla = numCastillos * altura * 4;
+  const piezasVarilla12m = Math.ceil(longTotalVarilla / 12 * 1.1);
+
+  const materiales = [
+    { nombre: def.label, unidad: 'piezas', cantidad: piezas, precio: precios[def.precioKey], precioKey: def.precioKey },
+    { nombre: 'Cemento mortero', unidad: 'sacos 50 kg', cantidad: cementoMortero, precio: precios.cemento_mortero_50kg, precioKey: 'cemento_mortero_50kg' },
+    { nombre: 'Arena de río', unidad: 'm³', cantidad: arenaMortero, precio: precios.arena_m3, precioKey: 'arena_m3' },
+    { nombre: 'Cal hidratada', unidad: 'sacos 25 kg', cantidad: cal, precio: precios.cal_25kg, precioKey: 'cal_25kg' }
+  ];
+
+  if (piezasVarilla12m > 0) {
+    materiales.push({ nombre: 'Varilla #3 (3/8") × 12 m', unidad: 'piezas', cantidad: piezasVarilla12m, precio: precios.varilla_3_pza, precioKey: 'varilla_3_pza' });
+  }
+
+  renderTabla(materiales, 'mur-materiales', 'muros');
+  document.getElementById('mur-total').textContent = money(totales.muros);
+  actualizarTotales();
+}
+
+// ========== PISOS ==========
+const formatosPiso = {
+  '20x20':  { area: 0.04, pzaCaja: 25 },
+  '30x30':  { area: 0.09, pzaCaja: 13 },
+  '45x45':  { area: 0.2025, pzaCaja: 8 },
+  '60x60':  { area: 0.36,  pzaCaja: 4 },
+  '80x80':  { area: 0.64,  pzaCaja: 3 },
+  '60x120': { area: 0.72,  pzaCaja: 2 },
+  '20x120': { area: 0.24,  pzaCaja: 6 }
+};
+
+function recalcPisos() {
+  const area = parseFloat(document.getElementById('pis-area').value) || 0;
+  if (area <= 0) { renderTabla([], 'pis-materiales', 'pisos'); document.getElementById('pis-total').textContent = money(0); actualizarTotales(); return; }
+  const formato = document.getElementById('pis-formato').value;
+  const merma = (parseFloat(document.getElementById('pis-merma').value) || 0) / 100;
+  const precioM2 = parseFloat(document.getElementById('pis-precio-m2').value) || 0;
+  precios.piso_m2 = precioM2;
+
+  const def = formatosPiso[formato];
+  const areaConMerma = area * (1 + merma);
+  const piezas = Math.ceil(areaConMerma / def.area);
+  const cajas = Math.ceil(piezas / def.pzaCaja);
+  const sacosAdhesivo = Math.ceil(area / 5);  // ~5 m² por saco de 20 kg
+  const bolsasBoquilla = Math.ceil(area / 15); // ~15 m² por bolsa 2 kg
+
+  const materiales = [
+    { nombre: 'Loseta ' + formato + ' cm', unidad: 'm² netos', cantidad: areaConMerma, precio: precioM2, precioKey: 'piso_m2' },
+    { nombre: 'Adhesivo (mortar mix)', unidad: 'sacos 20 kg', cantidad: sacosAdhesivo, precio: precios.adhesivo_20kg, precioKey: 'adhesivo_20kg' },
+    { nombre: 'Boquilla / lechada', unidad: 'bolsas 2 kg', cantidad: bolsasBoquilla, precio: precios.boquilla_2kg, precioKey: 'boquilla_2kg' }
+  ];
+
+  renderTabla(materiales, 'pis-materiales', 'pisos');
+  document.getElementById('pis-total').textContent = money(totales.pisos);
+  actualizarTotales();
+}
+
+// ========== ZOCLOS ==========
+function recalcZoclos() {
+  const perimetro = parseFloat(document.getElementById('zoc-perimetro').value) || 0;
+  if (perimetro <= 0) { renderTabla([], 'zoc-materiales', 'zoclos'); document.getElementById('zoc-total').textContent = money(0); actualizarTotales(); return; }
+  const numPuertas = parseInt(document.getElementById('zoc-num-puertas').value) || 0;
+  const anchoPuerta = parseFloat(document.getElementById('zoc-ancho-puerta').value) || 0;
+  const altoFileteo = parseFloat(document.getElementById('zoc-altura').value) || 0;
+  const precioMl = parseFloat(document.getElementById('zoc-precio-ml').value) || 0;
+  precios.zoclo_ml = precioMl;
+
+  // Descuento por puertas (ancho)
+  const descuento = numPuertas * anchoPuerta;
+  const perimetroNeto = Math.max(0, perimetro - descuento);
+
+  // Fileteo: 2 lados verticales por puerta
+  const fileteo = numPuertas * altoFileteo * 2;
+
+  const totalMl = (perimetroNeto + fileteo) * 1.05;  // 5% merma cortes
+
+  const materiales = [
+    { nombre: 'Zoclo (perímetro neto)', unidad: 'ml', cantidad: perimetroNeto, precio: precioMl, precioKey: 'zoclo_ml' },
+    { nombre: 'Fileteo de marcos', unidad: 'ml', cantidad: fileteo, precio: precioMl, precioKey: 'zoclo_ml' },
+    { nombre: 'Merma de cortes (5%)', unidad: 'ml', cantidad: totalMl - perimetroNeto - fileteo, precio: precioMl, precioKey: 'zoclo_ml' }
+  ];
+
+  renderTabla(materiales, 'zoc-materiales', 'zoclos');
+  document.getElementById('zoc-total').textContent = money(totales.zoclos);
+  actualizarTotales();
+}
+
+// ========== APLANADOS ==========
+const propAplanado = {
+  '1:3': { cemento: 9, arena: 1.05 },
+  '1:4': { cemento: 7.5, arena: 1.05 },
+  '1:5': { cemento: 6, arena: 1.05 }
+};
+
+function recalcAplanados() {
+  const area = parseFloat(document.getElementById('apl-area').value) || 0;
+  if (area <= 0) { renderTabla([], 'apl-materiales', 'aplanados'); document.getElementById('apl-total').textContent = money(0); actualizarTotales(); return; }
+  const espesorCm = parseFloat(document.getElementById('apl-espesor').value) || 0;
+  const prop = document.getElementById('apl-prop').value;
+  const def = propAplanado[prop];
+
+  const volumenMortero = area * (espesorCm / 100) * 1.1;  // 10% merma
+  const cemento = volumenMortero * def.cemento;
+  const arena = volumenMortero * def.arena;
+
+  const materiales = [
+    { nombre: 'Cemento mortero', unidad: 'sacos 50 kg', cantidad: cemento, precio: precios.cemento_mortero_50kg, precioKey: 'cemento_mortero_50kg' },
+    { nombre: 'Arena de río', unidad: 'm³', cantidad: arena, precio: precios.arena_m3, precioKey: 'arena_m3' }
+  ];
+
+  renderTabla(materiales, 'apl-materiales', 'aplanados');
+  document.getElementById('apl-total').textContent = money(totales.aplanados);
+  actualizarTotales();
+}
+
+// ========== YESO ==========
+function recalcYeso() {
+  const area = parseFloat(document.getElementById('yes-area').value) || 0;
+  if (area <= 0) { renderTabla([], 'yes-materiales', 'yeso'); document.getElementById('yes-total').textContent = money(0); actualizarTotales(); return; }
+  const espesorCm = parseFloat(document.getElementById('yes-espesor').value) || 0;
+
+  // Rendimiento: 1 saco 40 kg cubre ~3 m² a 1.5 cm
+  const rendimientoBase = 3;  // m² por saco a 1.5 cm
+  const sacos = Math.ceil((area * espesorCm / 1.5 / rendimientoBase) * 1.08);  // 8% merma
+
+  const materiales = [
+    { nombre: 'Yeso', unidad: 'sacos 40 kg', cantidad: sacos, precio: precios.yeso_40kg, precioKey: 'yeso_40kg' }
+  ];
+
+  renderTabla(materiales, 'yes-materiales', 'yeso');
+  document.getElementById('yes-total').textContent = money(totales.yeso);
+  actualizarTotales();
+}
+
+// ========== PINTURA ==========
+const pinturaTipos = {
+  vinilica:        { label: 'Vinílica interior',     unidad: 'cubeta 19 L', precioKey: 'vinilica_19l',       rend_lisa: 30, rend_text: 22, rend_rug: 16 },
+  'vinilica-ext':  { label: 'Vinílica exterior',     unidad: 'cubeta 19 L', precioKey: 'vinilica_ext_19l',   rend_lisa: 28, rend_text: 20, rend_rug: 14 },
+  esmalte:         { label: 'Esmalte 100',           unidad: 'galón 4 L',   precioKey: 'esmalte_4l',         rend_lisa: 10, rend_text: 8,  rend_rug: 6 },
+  impermeabilizante:{ label: 'Impermeabilizante muro', unidad: 'cubeta 19 L', precioKey: 'imper_muro_19l',  rend_lisa: 14, rend_text: 11, rend_rug: 9 }
+};
+
+function recalcPintura() {
+  const area = parseFloat(document.getElementById('pin-area').value) || 0;
+  if (area <= 0) { renderTabla([], 'pin-materiales', 'pintura'); document.getElementById('pin-total').textContent = money(0); actualizarTotales(); return; }
+  const tipo = document.getElementById('pin-tipo').value;
+  const textura = document.getElementById('pin-textura').value;
+  const manos = parseInt(document.getElementById('pin-manos').value) || 1;
+  const manosPrimer = parseInt(document.getElementById('pin-primer').value) || 0;
+
+  const def = pinturaTipos[tipo];
+  const rendKey = textura === 'lisa' ? 'rend_lisa' : (textura === 'texturizada' ? 'rend_text' : 'rend_rug');
+  const rend = def[rendKey];  // m² por unidad por mano
+
+  const unidadesPintura = Math.ceil((area * manos / rend) * 1.05);  // 5% merma
+
+  const materiales = [
+    { nombre: def.label, unidad: def.unidad, cantidad: unidadesPintura, precio: precios[def.precioKey], precioKey: def.precioKey }
+  ];
+
+  if (manosPrimer > 0) {
+    const unidadesPrimer = Math.ceil((area * manosPrimer / 28) * 1.05);
+    materiales.push({ nombre: 'Primer / sellador', unidad: 'cubeta 19 L', cantidad: unidadesPrimer, precio: precios.primer_19l, precioKey: 'primer_19l' });
+  }
+
+  renderTabla(materiales, 'pin-materiales', 'pintura');
+  document.getElementById('pin-total').textContent = money(totales.pintura);
+  actualizarTotales();
+}
+
+// ========== IMPERMEABILIZANTE ==========
+const imperTipos = {
+  'acrilico-3a':  { label: 'Acrílico 3 años',  unidad: 'cubeta 19 L', precioKey: 'imper_3a_19l',  rend: 10 },
+  'acrilico-5a':  { label: 'Acrílico 5 años',  unidad: 'cubeta 19 L', precioKey: 'imper_5a_19l',  rend: 8 },
+  'acrilico-10a': { label: 'Acrílico 10 años', unidad: 'cubeta 19 L', precioKey: 'imper_10a_19l', rend: 6 },
+  prefabricado:   { label: 'Prefabricado asfáltico', unidad: 'm²',    precioKey: 'imper_prefabricado_m2', rend: 1 }
+};
+
+function recalcImper() {
+  const area = parseFloat(document.getElementById('imp-area').value) || 0;
+  if (area <= 0) { renderTabla([], 'imp-materiales', 'imper'); document.getElementById('imp-total').textContent = money(0); actualizarTotales(); return; }
+  const tipo = document.getElementById('imp-tipo').value;
+  const def = imperTipos[tipo];
+
+  let materiales = [];
+
+  if (tipo === 'prefabricado') {
+    materiales.push({ nombre: def.label, unidad: 'm² (incluye sellador)', cantidad: Math.ceil(area * 1.1), precio: precios[def.precioKey], precioKey: def.precioKey });
+  } else {
+    const cubetas = Math.ceil(area / def.rend * 1.05);
+    materiales.push({ nombre: def.label, unidad: def.unidad, cantidad: cubetas, precio: precios[def.precioKey], precioKey: def.precioKey });
+    const malla = Math.ceil(area * 1.1);
+    materiales.push({ nombre: 'Malla refuerzo', unidad: 'm²', cantidad: malla, precio: precios.malla_refuerzo_m2, precioKey: 'malla_refuerzo_m2' });
+    const fibra = Math.ceil(area * 0.4);
+    materiales.push({ nombre: 'Fibra de vidrio en chaflanes', unidad: 'ml', cantidad: fibra, precio: precios.fibra_de_vidrio_m, precioKey: 'fibra_de_vidrio_m' });
+  }
+
+  renderTabla(materiales, 'imp-materiales', 'imper');
+  document.getElementById('imp-total').textContent = money(totales.imper);
+  actualizarTotales();
+}
+
+// ========== ACTUALIZACIÓN DE TOTALES ==========
+function actualizarTotales() {
+  document.getElementById('amt-concreto').textContent = money(totales.concreto);
+  document.getElementById('amt-muros').textContent = money(totales.muros);
+  document.getElementById('amt-pisos').textContent = money(totales.pisos);
+  document.getElementById('amt-zoclos').textContent = money(totales.zoclos);
+  document.getElementById('amt-aplanados').textContent = money(totales.aplanados);
+  document.getElementById('amt-yeso').textContent = money(totales.yeso);
+  document.getElementById('amt-pintura').textContent = money(totales.pintura);
+  document.getElementById('amt-imper').textContent = money(totales.imper);
+
+  // Toggle "zero" class
+  const partidas = ['concreto','muros','pisos','zoclos','aplanados','yeso','pintura','imper'];
+  partidas.forEach(p => {
+    const el = document.getElementById('amt-' + p);
+    if (totales[p] === 0) el.classList.add('zero');
+    else el.classList.remove('zero');
+  });
+
+  // Resumen
+  const resumenRows = document.getElementById('resumen-rows');
+  const labels = {
+    concreto: 'Concreto',
+    muros: 'Muros y mampostería',
+    pisos: 'Pisos',
+    zoclos: 'Zoclos',
+    aplanados: 'Aplanados',
+    yeso: 'Yeso',
+    pintura: 'Pintura',
+    imper: 'Impermeabilizante'
+  };
+  let html = '';
+  let grand = 0;
+  for (const k of partidas) {
+    const v = totales[k];
+    grand += v;
+    const dim = v === 0 ? 'dim' : '';
+    html += `<div class="resumen-row"><span class="label ${dim}">${labels[k]}</span><span class="val">${money(v)}</span></div>`;
+  }
+  resumenRows.innerHTML = html;
+  document.getElementById('resumen-grand').textContent = money(grand);
+  document.getElementById('total-global').textContent = money(grand);
+}
+
+function recalcularTodo() {
+  recalcConcreto();
+  recalcMuros();
+  recalcPisos();
+  recalcZoclos();
+  recalcAplanados();
+  recalcYeso();
+  recalcPintura();
+  recalcImper();
+}
+
+// ========== UI: TOGGLE PARTIDAS ==========
+function togglePartida(id) {
+  const p = document.getElementById(id);
+  p.classList.toggle('open');
+}
+
+// ========== RESET ==========
+function reiniciarTodo() {
+  if (!confirm('¿Reiniciar todos los valores y precios a los predeterminados?')) return;
+  precios = {...PRECIOS_DEFAULT};
+  guardarPrecios();
+  elementos = [];
+  document.getElementById('proyecto-nombre').value = '';
+  proyectoNombre = '';
+  try { localStorage.removeItem('cuantificador-proyecto'); } catch(e) {}
+
+  // Resetear inputs: cantidades vacías, configs a defaults técnicos
+  document.getElementById('conc-resistencia').value = '200';
+  document.getElementById('conc-merma').value = 5;
+  document.getElementById('mur-tipo').value = 'block6';
+  document.getElementById('mur-area').value = '';
+  document.getElementById('mur-castillos').value = 3;
+  document.getElementById('mur-altura').value = 2.7;
+  document.getElementById('pis-area').value = '';
+  document.getElementById('pis-formato').value = '60x60';
+  document.getElementById('pis-merma').value = 10;
+  document.getElementById('pis-precio-m2').value = 350;
+  document.getElementById('zoc-perimetro').value = '';
+  document.getElementById('zoc-tipo').value = 'ceramico';
+  document.getElementById('zoc-num-puertas').value = '';
+  document.getElementById('zoc-ancho-puerta').value = 0.9;
+  document.getElementById('zoc-altura').value = 2.1;
+  document.getElementById('zoc-precio-ml').value = 120;
+  document.getElementById('apl-area').value = '';
+  document.getElementById('apl-espesor').value = 2;
+  document.getElementById('apl-prop').value = '1:4';
+  document.getElementById('yes-area').value = '';
+  document.getElementById('yes-espesor').value = 1.5;
+  document.getElementById('pin-area').value = '';
+  document.getElementById('pin-tipo').value = 'vinilica';
+  document.getElementById('pin-textura').value = 'lisa';
+  document.getElementById('pin-manos').value = 2;
+  document.getElementById('pin-primer').value = 1;
+  document.getElementById('imp-area').value = '';
+  document.getElementById('imp-tipo').value = 'acrilico-3a';
+
+  renderElementos();
+  recalcularTodo();
+}
+
+// ========== EXPORTAR PDF ==========
+function exportarPDF() {
+  if (!window.jspdf) { alert('Cargando librería PDF, intenta de nuevo.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+  const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Header
+  doc.setFillColor(13, 17, 23); doc.circle(26, 18, 6, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255);
+  doc.text('AC', 26, 19.5, { align: 'center' });
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(13, 17, 23);
+  doc.text('Arq. Alvaro Chapa Villarreal', 36, 16);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(125, 133, 142);
+  doc.text('WhatsApp 81 2289 4100  ·  Cédula Prof. 2531610', 36, 21);
+
+  doc.setFillColor(239, 244, 255);
+  doc.roundedRect(140, 13, 64, 10, 5, 5, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(29, 78, 216);
+  doc.text('CUANTIFICADOR DE OBRA', 172, 19, { align: 'center' });
+
+  doc.setDrawColor(232, 234, 237); doc.setLineWidth(0.3);
+  doc.line(20, 30, 196, 30);
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(13, 17, 23);
+  doc.text('Cantidades y costos estimados', 20, 44);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(125, 133, 142);
+  if (proyectoNombre) {
+    doc.text('Proyecto: ' + proyectoNombre, 20, 50);
+    doc.text(fecha, 20, 55);
+  } else {
+    doc.text(fecha, 20, 50);
+  }
+  doc.line(20, 60, 196, 60);
+
+  let y = 70;
+  const partidaIds = [
+    { key: 'concreto', titulo: 'Concreto', subtitulo: 'f\'c ' + document.getElementById('conc-resistencia').value + ' kg/cm²' },
+    { key: 'muros', titulo: 'Muros y mampostería', subtitulo: muroPiezas[document.getElementById('mur-tipo').value].label },
+    { key: 'pisos', titulo: 'Pisos', subtitulo: 'Formato ' + document.getElementById('pis-formato').value },
+    { key: 'zoclos', titulo: 'Zoclos', subtitulo: 'Tipo ' + document.getElementById('zoc-tipo').value },
+    { key: 'aplanados', titulo: 'Aplanados', subtitulo: 'Proporción ' + document.getElementById('apl-prop').value },
+    { key: 'yeso', titulo: 'Yeso', subtitulo: '' },
+    { key: 'pintura', titulo: 'Pintura', subtitulo: pinturaTipos[document.getElementById('pin-tipo').value].label },
+    { key: 'imper', titulo: 'Impermeabilizante', subtitulo: imperTipos[document.getElementById('imp-tipo').value].label }
+  ];
+
+  let grand = 0;
+  for (const p of partidaIds) {
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(29, 78, 216);
+    doc.text(p.titulo.toUpperCase(), 20, y);
+    if (p.subtitulo) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(125, 133, 142);
+      doc.text(p.subtitulo, 20, y + 4);
+      y += 4;
+    }
+    y += 6;
+    doc.setTextColor(13, 17, 23); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.text('Subtotal partida', 20, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(money(totales[p.key]), 196, y, { align: 'right' });
+    grand += totales[p.key];
+    y += 8;
+    doc.setDrawColor(232, 234, 237); doc.setLineWidth(0.2);
+    doc.line(20, y - 3, 196, y - 3);
+  }
+
+  // Total
+  if (y > 230) { doc.addPage(); y = 20; }
+  y += 6;
+  doc.setFillColor(13, 17, 23);
+  doc.rect(20, y, 176, 14, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
+  doc.text('TOTAL GENERAL ESTIMADO', 25, y + 9);
+  doc.setFontSize(13);
+  doc.text(money(grand), 191, y + 9, { align: 'right' });
+
+  // Footer
+  doc.setDrawColor(232, 234, 237); doc.setLineWidth(0.3);
+  doc.line(20, 254, 196, 254);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(13, 17, 23);
+  doc.text('Arq. Alvaro Chapa Villarreal', 20, 260);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(125, 133, 142);
+  doc.text('WhatsApp 81 2289 4100  ·  Cédula Prof. 2531610', 20, 264);
+  doc.text('Cuantificación referencial. No incluye mano de obra ni equipo. Verificar precios con proveedor.', 20, 268);
+
+  const filename = 'cuantificacion-' + (proyectoNombre || 'obra').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + new Date().toISOString().slice(0,10) + '.pdf';
+  doc.save(filename);
+}
+
+// ========== INIT ==========
+document.getElementById('header-fecha').textContent = new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+
+const proyInp = document.getElementById('proyecto-nombre');
+proyInp.value = proyectoNombre;
+proyInp.addEventListener('input', () => {
+  proyectoNombre = proyInp.value;
+  try { localStorage.setItem('cuantificador-proyecto', proyectoNombre); } catch(e) {}
+});
+
+// Abrir primera partida por default
+document.getElementById('p-concreto').classList.add('open');
+
+// Render inicial
+renderElementos();
+recalcularTodo();
+</script>
+</body>
+</html>
